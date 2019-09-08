@@ -20,23 +20,28 @@ def synthesis(input):
     #         break
     with open(file_path, 'w') as wfile:
         codes = u_read_input(input)
+        codes = Fundamental.name_to_codes(codes)
         for code in codes:
             wfile.writelines(code + '\n')
         for code in codes:
             fundamental = Fundamental.get_fundamental(code)
             picking_info = get_picking_info(code)
             tech_info = DataHandler.get_tech_index_info(code)
-            synthesis_info = '%s\n%s\n%s' % (fundamental, picking_info, tech_info)
+            synthesis_info = '%s\n%s\n%s' % (fundamental, tech_info,picking_info)
             wfile.write(synthesis_info)
             wfile.write("\n\n\n")
     pass
 
 def daily_synthesis():
     synthesis('data/position.txt')
+    synthesis('data/attention.txt')
     synthesis('/Users/hero101/Documents/t_acti_today.txt')
     synthesis('/Users/hero101/Documents/t_macd_today.txt')
+    synthesis('/Users/hero101/Documents/t_ss_today.txt')
     synthesis('/Users/hero101/Documents/t_acti_check.txt')
     synthesis('/Users/hero101/Documents/t_macd_check.txt')
+    synthesis('/Users/hero101/Documents/t_doctor_check.txt')
+
 
 
 if __name__ == '__main__':
@@ -44,7 +49,10 @@ if __name__ == '__main__':
 
     synthesis('data/input.txt')
     synthesis('data/position.txt')
+    synthesis('data/attention.txt')
     synthesis('/Users/hero101/Documents/t_acti_today.txt')
     synthesis('/Users/hero101/Documents/t_macd_today.txt')
+    synthesis('/Users/hero101/Documents/t_ss_today.txt')
     synthesis('/Users/hero101/Documents/t_acti_check.txt')
     synthesis('/Users/hero101/Documents/t_macd_check.txt')
+    synthesis('/Users/hero101/Documents/t_doctor_check.txt')

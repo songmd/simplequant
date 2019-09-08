@@ -27,6 +27,7 @@ class Fundamental(object):
     BASIC_TB = 'basic'
     ANAL_FINA_TB = 'analyze_finance'
     INDUSTRY_TB = 'industry'
+    DOCTOR_TB = 'doctor'
     CONCEPT_TB = 'concept'
 
     @staticmethod
@@ -71,7 +72,7 @@ class Fundamental(object):
             {
                 'query_url': 'http://www.iwencai.com/stockpick/search?typed=0&preParams=&ts=1&f=1&qs=result_original&selfsectsn=&querytype=stock&searchfilter=&tid=stockpick&w=业绩预告&queryarea=',
                 'dest_file': Fundamental.YUZENJIAN,
-                'sleep': 5
+                'sleep': 8
             },
             {
                 'query_url': 'http://www.iwencai.com/stockpick/search?typed=1&preParams=&ts=1&f=3&qs=result_rewrite&selfsectsn=&querytype=stock&searchfilter=&tid=stockpick&w=最近8个月增减持计划&queryarea=',
@@ -92,11 +93,13 @@ class Fundamental(object):
                 driver.get(Fundamental.WENCAI_HOME_URL)
                 for key in cookie:
                     driver.add_cookie({'name': key, 'value': cookie[key]})
+                time.sleep(1)
                 driver.get(task['query_url'])
                 file_name = datetime.date.today().strftime('%Y-%m-%d.xls')
                 full_file_name = '%s/%s' % (Fundamental.DOWNLOAD_PATH, file_name)
                 if os.path.exists(full_file_name):
                     os.remove(full_file_name)
+                time.sleep(2)
                 driver.find_element_by_xpath("//div[@id='table_top_bar']//ul/li[contains(text(),'导数据')]").click();
                 time.sleep(task['sleep'])
                 if os.path.exists(task['dest_file']):
@@ -143,6 +146,13 @@ class Fundamental(object):
         cursor = conn.cursor()
         cursor.execute("SELECT symbol,name FROM '%s'" % Fundamental.BASIC_TB)
         return [row for row in cursor]
+
+    @staticmethod
+    def get_names():
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        cursor = conn.cursor()
+        cursor.execute("SELECT symbol,name FROM '%s'" % Fundamental.BASIC_TB)
+        return {row[1]: row[0] for row in cursor}
 
     @staticmethod
     #   业绩预告处理
@@ -583,7 +593,10 @@ class Fundamental(object):
             # break
         pass
 
-    hot_concepts = ['5G', '华为', '芯片', 'OLED', '高送转', '半导体', '区块链', '黄金', '军工', '稀土', '集成电路', '人工智能']
+    hot_concepts = ['5G', '华为', '芯片', 'OLED',
+                    '高送转', '半导体', '区块链',
+                    '黄金', '军工', '稀土', '集成电路', '人工智能',
+                    '光伏', '生物', '医药', '富时罗素', '白酒']
 
     @staticmethod
     def get_codes_by_concept(concepts):
@@ -596,6 +609,17 @@ class Fundamental(object):
             sql = "select distinct code from '%s' where %s" % (table_name, ' or '.join(concepts_cond))
         cursor.execute(sql)
         return [row[0] for row in cursor]
+
+    @staticmethod
+    def name_to_codes(targets):
+        names = Fundamental.get_names()
+        result = []
+        for target in targets:
+            if len(target) != 6:
+                result.append(names[target])
+            else:
+                result.append(target)
+        return result
 
     @staticmethod
     def download_concept():
@@ -658,6 +682,133 @@ class Fundamental(object):
         pass
 
     @staticmethod
+    def download_doctor():
+        all_stocks = Fundamental.get_stocks()
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        table_name = Fundamental.DOCTOR_TB
+        cursor = conn.cursor()
+        # cursor.execute("drop table if exists '%s'" % table_name)
+        cursor.execute(
+            '''create table if not exists '%s' (
+                                        code TEXT,
+                                        name TEXT,
+                                        cpr INT,
+                                        tcr INT,
+                                        fdr INT,
+                                        mgr INT,
+                                        inr INT,
+                                        bsr INT,
+                                        cpl TEXT,
+                                        cyw TEXT,
+                                        minc INT,
+                                        minr FLOAT,
+                                        date TEXT)''' % table_name)
+
+        cursor.execute("select distinct code from '%s'" % table_name)
+        exist_codes = {row[0] for row in cursor}
+        insert_sql = "insert into '%s' values (?,?,?,?,?,?,?,?,?,?,?,?,?)" % table_name
+        req_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
+        }
+        count = 0
+        today = u_day_befor(0)
+        for stock in all_stocks:
+            print(count)
+            count += 1
+
+            if stock[0] in exist_codes:
+                continue
+
+            if count % 100 == 0:
+                time.sleep(15)
+
+            cpr = 50  # 综合排名比
+            cpl = ''  # 综合评级
+            tcr = 50  # 技术排名比
+            fdr = 50  # 资金排名比
+            mgr = 50  # 消息排名比
+            inr = 50  # 行业排名比
+            bsr = 50  # 基本面排名比
+            # rstp = 0.0  # 阻力价格
+            # sptp = 0.0  # 支撑价格
+            # avgp = 0.0  # 平均成本价格
+            cyw = ''  # 主力控盘程度
+            minc = 0  # 主力机构家数
+            minr = 0.0  # 主力机构持股占比
+
+            doctor_url = 'http://doctor.10jqka.com.cn/%s/' % stock[0]
+            doctor_req = urllib.request.Request(doctor_url, headers=req_headers)
+            doctor_resp = urllib.request.urlopen(doctor_req).read()
+            doctor_root = lxml.etree.HTML(doctor_resp)
+            cpr_text = doctor_root.xpath('//div[@class="stocktotal"]/text()')
+            if not cpr_text:
+                continue
+            else:
+                cpr_text = cpr_text[0]
+            cpr = int(re.findall(r"打败了(.+?)%的股票", cpr_text)[0])
+            cpl = doctor_root.xpath('//div[@class="value_bar"]//span[@class="cur"]/text()')[0]
+
+            # 机构家数、及占比
+            ltrd_text = doctor_root.xpath('//div[@class="value_info"]//li[@class="long"]/p/text()')
+            ltrd_text = ltrd_text[0] if ltrd_text else ''
+            ltrd_re = re.findall(r"共(.+?)家主力机构.+?占流通A股(.+?)%", ltrd_text)
+            minc, minr = ltrd_re[0] if ltrd_re else (0, 0)
+            minc = int(minc)
+            minr = float(minr)
+
+            # 控盘情况
+            cyw_text = doctor_root.xpath('//div[contains(text(),"控盘")]/text()')[0]
+            cyw = re.findall(r"(.{2}控盘)", cyw_text)[0]
+
+            # 各分项比率
+            tcr_text = doctor_root.xpath('//div[@class="box2wrap technical_score"]//span[@class="gray"]/text()')[0]
+            tcr = int(re.findall(r"打败了(.+?)%的股票", tcr_text)[0])
+            fdr_text = doctor_root.xpath('//div[@class="box2wrap funds_score"]//span[@class="gray"]/text()')[0]
+            fdr = int(re.findall(r"打败了(.+?)%的股票", fdr_text)[0])
+            mgr_text = doctor_root.xpath('//div[@class="box2wrap message_score"]//span[@class="gray"]/text()')[0]
+            mgr = int(re.findall(r"打败了(.+?)%的股票", mgr_text)[0])
+            inr_text = doctor_root.xpath('//div[@class="box2wrap trade_score"]//span[@class="gray"]/text()')[0]
+            inr = int(re.findall(r"打败了(.+?)%的股票", inr_text)[0])
+            bsr_text = doctor_root.xpath('//div[@class="box2wrap basic_score"]//span[@class="gray"]/text()')[0]
+            bsr = int(re.findall(r"打败了(.+?)%的股票", bsr_text)[0])
+
+            # avgp_text = doctor_root.xpath('//div[contains(text(),"近期的平均成本为")]/strong/text()')[0]
+            # avgp = float(avgp_text.strip('元'))
+            # rsp_text = doctor_root.xpath('//div[contains(text(),"该股压力位")]/text()')[0]
+            # rstp, sptp = re.findall(r"压力位为(.+?)元.+?支撑位为(.+?)元", rsp_text)[0]
+            # rstp = float(rstp)
+            # sptp = float(sptp)
+
+            cursor.execute(insert_sql, (
+                stock[0], stock[1], cpr, tcr, fdr, mgr, inr, bsr, cpl, cyw,
+                minc, minr, today))
+            conn.commit()
+            # break
+        pass
+
+    @staticmethod
+    def update_fundamental():
+
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        cursor = conn.cursor()
+        tables = [
+            Fundamental.FINA_TB,
+            Fundamental.BASIC_TB,
+            Fundamental.ANAL_FINA_TB,
+            Fundamental.INDUSTRY_TB,
+            Fundamental.CONCEPT_TB,
+        ]
+        for table in tables:
+            cursor.execute("drop table if exists '%s'" % table)
+
+        Fundamental.download_basic()
+        Fundamental.download_industry()
+        Fundamental.download_concept()
+        Fundamental.download_finance_data()
+        Fundamental.analyze_finance_data()
+        pass
+
+    @staticmethod
     def get_fundamental(code):
 
         conn = sqlite3.connect(Fundamental.FUNDA_DB)
@@ -672,7 +823,12 @@ class Fundamental(object):
 
         cursor.execute("select field1,field2,field3 from '%s' where code='%s'" % (Fundamental.INDUSTRY_TB, code))
         result = [row for row in cursor]
-        fld1, fld2, fld3 = result[0] if result else ('','','')
+        fld1, fld2, fld3 = result[0] if result else ('', '', '')
+
+        cursor.execute("select cpr,tcr,fdr,mgr,inr,bsr,cpl,cyw,minc,minr from '%s' where code='%s'" % (
+            Fundamental.DOCTOR_TB, code))
+        result = [row for row in cursor]
+        cpr, tcr, fdr, mgr, inr, bsr, cpl, cyw, minc, minr = result[0] if result else (0, 0, 0, 0, 0, 0, '', '', 0, 0)
 
         cursor.execute("select concept,concept_e,concept_o from '%s' where code='%s'" % (Fundamental.CONCEPT_TB, code))
         concept = [c for c in [row for row in cursor][0] if c]
@@ -710,13 +866,18 @@ class Fundamental(object):
 
         info = '''%s(%s)   所在地:%s  上市日期:%s   %s-%s-%s  
 概念题材:   %s
+诊断信息：
+    评级:%s   综合 %s%%   技术面 %s%%   资金面 %s%%   消息面 %s%%   行业面 %s%%   基本面 %s%%    
+    主力机构 %s 家,  持有流通股 %s %%   主力控盘程度: %s 
 %s
 最近报告期业绩:  营收同比%s%%  净利润同比%s%%  扣非净利润同比%s%%
 年度业绩:  营收          %8.5f亿     历年同比 %s%%   %s%%   %s%%   %s%%
           净利润        %8.5f亿     历年同比 %s%%   %s%%   %s%%   %s%%
           扣非净利润     %8.5f亿     历年同比 %s%%   %s%%   %s%%   %s%%
-%s''' % (
+%s
+''' % (
             name, code, area, list_date, fld1, fld2, fld3, ','.join(concept),
+            cpl, cpr, tcr, fdr, mgr, inr, bsr, minc, minr, cyw,
             yzj_info,
             lrvr, lnpr, lkfnpr,
             rv, rvr4, rvr3, rvr2, rvr1,
@@ -726,6 +887,51 @@ class Fundamental(object):
         )
         return info
         # print(info)
+
+    @staticmethod
+    def daily_run2():
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        cursor = conn.cursor()
+        tables = [
+            Fundamental.DOCTOR_TB,
+
+        ]
+        for table in tables:
+            cursor.execute("drop table if exists '%s'" % table)
+            pass
+        Fundamental.download_doctor()
+        cursor.execute("create table if not exists doc_hist as select * from %s where 1=0" % Fundamental.DOCTOR_TB)
+        cursor.execute("insert into doc_hist select * from %s" % Fundamental.DOCTOR_TB)
+        conn.commit()
+
+    @staticmethod
+    def check_doctor():
+        from mytushare import get_realtime_quotes
+        table_name = Fundamental.DOCTOR_TB
+        overflow = 2.8
+        concepts = Fundamental.hot_concepts
+        concepts_codes = Fundamental.get_codes_by_concept(concepts)
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        cursor = conn.cursor()
+        cursor.execute(
+            "select distinct code from '%s' where tcr < 80 and cpr > 50 and fdr > 50 and bsr > 50 and cpl != '减持' and minc < 100 " % (
+                table_name,))
+
+        codes = [row[0] for row in cursor if row[0] in concepts_codes]
+        codes = Fundamental.remove_st(codes)
+        if codes:
+            results = []
+            df = get_realtime_quotes([key for key in codes])
+            for index, row in df.iterrows():
+                code = row['code']
+                pre_close = float(row['pre_close'])
+                price = float(row['price'])
+                rcp = round((price / pre_close - 1) * 100, 2)
+                if rcp > overflow:
+                    results.append(code)
+            u_write_to_file('/Users/hero101/Documents/t_doctor_check.txt', results)
+            return results
+        return []
 
 
 if __name__ == '__main__':
@@ -749,5 +955,8 @@ if __name__ == '__main__':
     # Fundamental.download_concept()
     # cProfile.run('Fundamental.daily_run()')
     # Fundamental.get_fundamental('300134')
-    Fundamental.create_wencai_cookie()
+    # Fundamental.create_wencai_cookie()
+    # cProfile.run('Fundamental.update_fundamental()')
+    # cProfile.run('Fundamental.download_doctor()')
+    cProfile.run('Fundamental.daily_run2()')
     pass

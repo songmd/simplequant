@@ -7,14 +7,18 @@ from mytushare import get_realtime_quotes
 
 PICKING_DB = 'data/picking.db'
 WAVE_SCOPE_THRESHOLD = 14
-ACTIVITY_THRESHOLD = 29
+ACTIVITY_THRESHOLD = 31
 WAVE_COUNT_THRESHOLD = 12
+LIMIT_COUNT_THRESHOLD = 0.02
 
 
 def get_wave(scope, vct, is_index=False):
     result = []
-
+    upstaying = 0
     for index in range(0, len(vct)):
+        if index >= 1 and (vct[index] / vct[index - 1] - 1) * 100 > 9:
+            upstaying += 1
+
         last_close = vct[index]
         if not result:
             result.append(index)
@@ -74,6 +78,8 @@ def get_wave(scope, vct, is_index=False):
     min_down = 0
     avg_up = 0
     avg_down = 0
+    # 平均涨停数
+    avg_limit = 0
     l_close_p = 0
     last_duration = 0
     high_dif = 0
@@ -88,6 +94,7 @@ def get_wave(scope, vct, is_index=False):
     sideway_duration = 0
     activity = 0
     if result:
+        avg_limit = round(upstaying / len(vct), 2)
         activity = round(len(vct) / (len(result)), 2)
         last_dif = round((vct[-1] / vct[result[-1]] - 1) * 100, 2)
         high_dif = round((vct[-1] / max(vct) - 1) * 100, 2)
@@ -101,7 +108,7 @@ def get_wave(scope, vct, is_index=False):
         l_close_p = round((vct[-1] / vct[-2] - 1) * 100, 2)
 
     return result, len(
-        result), activity, max_up, avg_up, min_down, avg_down, last_wave, l_close_p, high_dif, low_dif, last_dif, last_duration, sideway_duration
+        result), activity, avg_limit, max_up, avg_up, min_down, avg_down, last_wave, l_close_p, high_dif, low_dif, last_dif, last_duration, sideway_duration
 
 
 def verify(code, scope, begin_date, end_date):
@@ -115,7 +122,7 @@ def verify(code, scope, begin_date, end_date):
     for row in cursor:
         close_.append(row[0])
         dates.append(row[1])
-    result, waves, activity, max_up, avg_up, min_down, avg_down, last_wave, l_close_p, high_dif, low_dif, last_dif, last_duration = get_wave(
+    result, waves, activity, avg_limit, max_up, avg_up, min_down, avg_down, last_wave, l_close_p, high_dif, low_dif, last_dif, last_duration = get_wave(
         scope, close_)
     for index in result:
         print(dates[index])
@@ -148,7 +155,7 @@ def stat_index(scopes, begin_date, end_date):
             close_s.append(row[0])
             date_s.append(row[1])
         for scope in scopes:
-            (result, waves, activity, max_up, avg_up, min_down, avg_down, last_wave, l_close_p,
+            (result, waves, activity, avg_limit, max_up, avg_up, min_down, avg_down, last_wave, l_close_p,
              high_dif, low_dif, last_dif, last_duration, sideway_duration) = get_wave(
                 scope, close_s, True)
             details_dur = []
@@ -176,12 +183,12 @@ def stat_activity(table_name, replace, scope, begin_date, end_date):
     cursor_res = conn_res.cursor()
     # 股性活跃度表
     # table_name = 'activity'
-    insert_sql = "insert into '%s' values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" % table_name
+    insert_sql = "insert into '%s' values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" % table_name
     if replace:
         cursor_res.execute("drop table if exists '%s'" % table_name)
     cursor_res.execute(
         '''create table if not exists '%s' (
-        code TEXT,date_range TEXT,waves INT,activity REAL,
+        code TEXT,date_range TEXT,waves INT,activity REAL,avg_limit REAL,
         max_up REAL,avg_up REAL,min_down REAL,avg_down REAL,last_wave REAL ,l_close_p REAL ,
         high_dif REAL,low_dif REAL,last_dif REAL,last_duration INT,sideway_duration INT,detail_dur TEXT,detail_scope TEXT)''' % table_name)
 
@@ -196,7 +203,7 @@ def stat_activity(table_name, replace, scope, begin_date, end_date):
         for row in cursor:
             close_s.append(row[0])
             date_s.append(row[1])
-        (result, waves, activity, max_up, avg_up, min_down, avg_down, last_wave, l_close_p,
+        (result, waves, activity, avg_limit, max_up, avg_up, min_down, avg_down, last_wave, l_close_p,
          high_dif, low_dif, last_dif, last_duration, sideway_duration) = get_wave(
             scope, close_s)
         details_dur = []
@@ -208,15 +215,18 @@ def stat_activity(table_name, replace, scope, begin_date, end_date):
                 details_scope.append('%6s' % (u_calc_ratio(close_s[result[i - 1]], close_s[result[i]]),))
 
         cursor_res.execute(insert_sql,
-                           (code, '%s-%s' % (begin_date, end_date), waves, activity, max_up, avg_up, min_down, avg_down,
-                            last_wave, l_close_p, high_dif, low_dif, last_dif, last_duration, sideway_duration,
-                            '  '.join(reversed(details_dur)),
-                            '  '.join(reversed(details_scope))))
+                           (
+                               code, '%s-%s' % (begin_date, end_date), waves, activity, avg_limit, max_up, avg_up,
+                               min_down,
+                               avg_down,
+                               last_wave, l_close_p, high_dif, low_dif, last_dif, last_duration, sideway_duration,
+                               '  '.join(reversed(details_dur)),
+                               '  '.join(reversed(details_scope))))
     conn_res.commit()
     pass
 
 
-def analyze_activity(table_name, activity, count_limit):
+def analyze_activity(table_name, activity, avg_limit, count_limit):
     print('analyze_activity...')
     conn = sqlite3.connect(PICKING_DB)
     cursor = conn.cursor()
@@ -224,12 +234,12 @@ def analyze_activity(table_name, activity, count_limit):
     codes = [row[0] for row in cursor]
     result = []
     for code in codes:
-        cursor.execute("select activity from '%s' where code = '%s'" % (table_name, code))
+        cursor.execute("select activity,avg_limit from '%s' where code = '%s'" % (table_name, code))
         select = True
         count = 0
         for row in cursor:
             count += 1
-            if row[0] > activity or row[0] == 0:
+            if row[0] > activity or row[0] == 0 or row[1] < avg_limit:
                 select = False
         if select and count > count_limit:
             result.append(code)
@@ -313,14 +323,14 @@ def all_acti():
     conn = sqlite3.connect(PICKING_DB)
     cursor = conn.cursor()
     cursor.execute(
-        "select distinct code from '%s' where activity < %s and waves > %s order by activity" % (
-            table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD))
+        "select distinct code from '%s' where activity < %s and waves > %s and avg_limit > %s order by activity" % (
+            table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD, LIMIT_COUNT_THRESHOLD))
 
     u_write_to_file('/Users/hero101/Documents/t_acti_all.txt', Fundamental.remove_st([row[0] for row in cursor]))
     cursor.execute(
-        "select distinct code from '%s' where l_close_p > 1 and last_wave < 0 and activity < %s and waves > %s and last_dif < 10 order by activity" % (
-            table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD))
-    u_write_to_file('/Users/hero101/Documents/t_acti_today.txt',  Fundamental.remove_st([row[0] for row in cursor]))
+        "select distinct code from '%s' where l_close_p > 1 and last_wave < 0 and activity < %s and waves > %s and avg_limit > %s and last_dif < 10 order by activity" % (
+            table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD, LIMIT_COUNT_THRESHOLD))
+    u_write_to_file('/Users/hero101/Documents/t_acti_today.txt', Fundamental.remove_st([row[0] for row in cursor]))
 
 
 def jx_acti():
@@ -331,12 +341,12 @@ def jx_acti():
     stat_activity(table_name, False, scope, '20180101', '20180630')
     stat_activity(table_name, False, scope, '20180701', '20181231')
     stat_activity(table_name, False, scope, '20190101', u_month_befor(0))
-    analyze_activity(table_name, ACTIVITY_THRESHOLD, 3)
+    analyze_activity(table_name, ACTIVITY_THRESHOLD, LIMIT_COUNT_THRESHOLD, 3)
 
 
 def check_acti():
     table_name = 'allacti'
-    overflow = 3.2
+    overflow = 2.8
     concepts = Fundamental.hot_concepts
     concepts_codes = Fundamental.get_codes_by_concept(concepts)
 
@@ -359,6 +369,26 @@ def check_acti():
             if rcp > overflow:
                 results.append(code)
         u_write_to_file('/Users/hero101/Documents/t_acti_check.txt', results)
+        return results
+    return []
+
+
+def check_attention():
+    overflow = 2.8
+
+    codes = u_read_input('attention.txt')
+    codes = Fundamental.name_to_codes(codes)
+    if codes:
+        results = []
+        df = get_realtime_quotes([key for key in codes])
+        for index, row in df.iterrows():
+            code = row['code']
+            pre_close = float(row['pre_close'])
+            price = float(row['price'])
+            rcp = round((price / pre_close - 1) * 100, 2)
+            if rcp > overflow:
+                results.append(code)
+        u_write_to_file('/Users/hero101/Documents/t_attention_check.txt', results)
         return results
     return []
 
@@ -432,20 +462,20 @@ def get_picking_info(code):
 
     wave_info = '波段信息：  无'
     cursor.execute('''
-            select date_range,activity,max_up,avg_up,min_down,avg_down,last_wave,high_dif,low_dif,last_dif,last_duration,sideway_duration,detail_dur,detail_scope from allacti 
+            select date_range,activity,avg_limit,max_up,avg_up,min_down,avg_down,last_wave,high_dif,low_dif,last_dif,last_duration,sideway_duration,detail_dur,detail_scope from allacti 
             where code = '%s'
         ''' % code)
     wave = [row for row in cursor]
     if wave:
-        (date_range, activity, max_up, avg_up, min_down, avg_down, last_wave, high_dif, low_dif, last_dif,
+        (date_range, activity, avg_limit, max_up, avg_up, min_down, avg_down, last_wave, high_dif, low_dif, last_dif,
          last_duration, sideway_duration, detail_dur, detail_scope) = wave[0]
         wave_info = '''波段统计(%s):
 %s
 %s
-    波段平均持续 %s 天     波段最大涨幅 %s%%   平均波段涨幅 %s%%    波段最大跌幅 %s%%    波段平均跌幅 %s%%
+    波段平均持续 %s 天   涨停可能性 %s    波段最大涨幅 %s%%   平均波段涨幅 %s%%    波段最大跌幅 %s%%    波段平均跌幅 %s%%
     当前波段幅度 %s%%    已持续 %s 天   波段极值点距今有 %s 天
     当前股价比最高点跌幅 %s%%   比最低点涨幅 %s%%    比当前波段极值点涨跌幅 %s%%''' % (
-            date_range, detail_scope, detail_dur, activity, max_up, avg_up, min_down, avg_down,
+            date_range, detail_scope, detail_dur, activity, avg_limit, max_up, avg_up, min_down, avg_down,
             last_wave, last_duration, sideway_duration,
             high_dif, low_dif, last_dif)
     ret_info = '%s\n%s' % (rps_info, wave_info)
@@ -457,10 +487,10 @@ if __name__ == '__main__':
     import cProfile
 
     #
-    stat_index([3.0, 5.0, 7.0, 9.0], '20140101', u_month_befor(0))
-    create_index_info()
-    # all_acti()
-    # jx_acti()
+    # stat_index([3.0, 5.0, 7.0, 9.0], '20140101', u_month_befor(0))
+    # create_index_info()
+    all_acti()
+    jx_acti()
     # calc_rps()
     # verify('600086',18,'20170101', u_month_befor(0))
     # get_picking_info('600086')

@@ -1,6 +1,7 @@
 from dataprocess import dh_check_macd
-from picking import check_acti
+from picking import check_acti, check_attention
 from synthesis import synthesis
+from fundamental import Fundamental
 
 import time
 
@@ -38,6 +39,25 @@ def rtm(debug=False):
             itchat.send(msg, toUserName=target_group)
             itchat.send_file('data/dgn_t_macd_check.txt', toUserName=target_group)
 
+        result = set(Fundamental.check_doctor())
+        if result:
+            synthesis('/Users/hero101/Documents/t_doctor_check.txt')
+        need_notify = result - already_notify
+        already_notify |= result
+        if need_notify:
+            msg = 'check_doctor targets:\n%s' % (' '.join(need_notify),)
+            itchat.send(msg, toUserName=target_group)
+            itchat.send_file('data/dgn_t_doctor_check.txt', toUserName=target_group)
+
+        result = set(check_attention())
+        if result:
+            synthesis('/Users/hero101/Documents/t_attention_check.txt')
+        need_notify = result - already_notify
+        already_notify |= result
+        if need_notify:
+            msg = 'check_attention targets:\n%s' % (' '.join(need_notify),)
+            itchat.send(msg, toUserName=target_group)
+            itchat.send_file('data/dgn_t_attention_check.txt', toUserName=target_group)
         time.sleep(5)
 
 

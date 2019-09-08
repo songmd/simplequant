@@ -21,7 +21,6 @@ class DataHandler(object):
     COOKECD_DB = 'data/cooked_data.db'
     CAL_TXT = 'data/cal.txt'
 
-
     #
     # 280万
     # @staticmethod
@@ -964,12 +963,12 @@ class DataHandler(object):
         days = [r[0] for r in cursor]
         codes1 = u_read_input('/Users/hero101/Documents/t_macd_all.txt')
         codes2 = u_read_input('/Users/hero101/Documents/t_macd_jx.txt')
-        sql = "select code,ljt,d1t,macd,ma,boll from daily where code in (%s) and trade_date in (%s) and trend < 0 and ljt < 9.0 and d1t<9.0" % (
+        sql = "select code,ljt,d1t from daily where code in (%s) and trade_date in (%s) and trend < 0 and ljt < 9.0 and d1t<9.0" % (
             u_format_list([e for e in concept_codes if (e in codes1 or e in codes2)]), u_format_list(days))
         cursor.execute(sql)
         targets = {}
         for row in cursor:
-            targets[row[0]] = (row[1], row[2], row[3], row[4], row[5])
+            targets[row[0]] = (row[1], row[2])
         # print(len(targets))
         results = []
         if targets:
@@ -981,12 +980,11 @@ class DataHandler(object):
                     price = float(row['price'])
                     rcp = round((price / pre_close - 1) * 100, 2)
                     # print(rcp,targets[code][1])
-                    if rcp > targets[code][1] + overflow:
+                    if rcp > targets[code][0] + overflow:
                         results.append(code)
 
         u_write_to_file('/Users/hero101/Documents/t_macd_check.txt', results)
         return results
-
 
     @staticmethod
     def select_today_macd():
@@ -994,6 +992,10 @@ class DataHandler(object):
             'macd_al': '/Users/hero101/Documents/t_macd_all.txt',
             'macd_jx': '/Users/hero101/Documents/t_macd_jx.txt'
         }
+
+        from fundamental import Fundamental
+        concepts = Fundamental.hot_concepts
+        concept_codes = Fundamental.get_codes_by_concept(concepts)
 
         conn = sqlite3.connect(DataHandler.COOKECD_DB)
         cursor = conn.cursor()
@@ -1010,6 +1012,9 @@ class DataHandler(object):
         result += [row[0] for row in cursor if row[0] not in result]
 
         result = Fundamental.remove_st(result)
+
+        result = [e for e in result if e in concept_codes]
+
         u_write_to_file('/Users/hero101/Documents/t_macd_today.txt', result)
         pass
 
@@ -1081,6 +1086,16 @@ boll线： %s    收盘价距上轨 %s%%   中轨 %s%%    下轨 %s%%
        )
         return tech_info
         # print(tech_info)
+
+    @staticmethod
+    def create_today_super_stock():
+        conn = sqlite3.connect(DataHandler.COOKECD_DB)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT code FROM today where list_date < '%s' and close_r >= 8.0 order by close_r desc " % (
+                u_day_befor(6),))
+        u_write_to_file('/Users/hero101/Documents/t_ss_today.txt', [row[0] for row in cursor])
+        pass
 
     @staticmethod
     def create_today_table():
@@ -1168,6 +1183,7 @@ def dh_daily_run():
     # DataHandler.download_concept_detail()
     DataHandler.cook_raw_db('20160701')
     DataHandler.create_today_table()
+    DataHandler.create_today_super_stock()
     DataHandler.select_today_macd()
     DataHandler.download_index()
     # DataHandler.create_attention_ex()
@@ -1263,5 +1279,7 @@ if __name__ == '__main__':
     # df.to_sql('fina', engine, if_exists='replace', index=True)
     # print(df)
     # DataHandler.get_tech_index_info('603106')
-    DataHandler.create_today_table()
+    # DataHandler.create_today_table()
+    # DataHandler.select_today_macd()
+    DataHandler.create_today_super_stock()
     pass

@@ -346,20 +346,22 @@ def jx_acti():
 
 def check_acti():
     table_name = 'allacti'
+    last_wave = 28
+    last_dif = 10
     overflow = 2.8
-    concepts = Fundamental.hot_concepts
+    concepts = u_read_input('data/hot_concepts')
     concepts_codes = Fundamental.get_codes_by_concept(concepts)
 
     conn = sqlite3.connect(PICKING_DB)
     cursor = conn.cursor()
     cursor.execute(
-        "select distinct code from '%s' where last_wave < 0 and activity < %s and waves > %s and last_dif < 3" % (
-            table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD))
+        "select distinct code from '%s' where last_wave < %s and activity < %s and waves > %s and avg_limit > %s and last_dif < %s" % (
+            table_name, last_wave, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD, LIMIT_COUNT_THRESHOLD, last_dif))
 
     codes = [row[0] for row in cursor if row[0] in concepts_codes]
     codes = Fundamental.remove_st(codes)
     if codes:
-        results = []
+        results = {}
         df = get_realtime_quotes([key for key in codes])
         for index, row in df.iterrows():
             code = row['code']
@@ -367,19 +369,22 @@ def check_acti():
             price = float(row['price'])
             rcp = round((price / pre_close - 1) * 100, 2)
             if rcp > overflow:
-                results.append(code)
+                results[code] = price
         u_write_to_file('/Users/hero101/Documents/t_acti_check.txt', results)
         return results
-    return []
+    return {}
 
 
 def check_attention():
     overflow = 2.8
-
-    codes = u_read_input('attention.txt')
+    concepts = u_read_input('data/hot_concepts')
+    concepts_codes = Fundamental.get_codes_by_concept(concepts)
+    codes = u_read_input('data/attention.txt')
     codes = Fundamental.name_to_codes(codes)
+    codes = Fundamental.remove_st(codes)
+    codes = [e for e in codes if e in concepts_codes]
     if codes:
-        results = []
+        results = {}
         df = get_realtime_quotes([key for key in codes])
         for index, row in df.iterrows():
             code = row['code']
@@ -387,10 +392,10 @@ def check_attention():
             price = float(row['price'])
             rcp = round((price / pre_close - 1) * 100, 2)
             if rcp > overflow:
-                results.append(code)
+                results[code] = price
         u_write_to_file('/Users/hero101/Documents/t_attention_check.txt', results)
         return results
-    return []
+    return {}
 
 
 def picking_daily():

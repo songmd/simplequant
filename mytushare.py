@@ -82,8 +82,16 @@ def get_realtime_quotes(symbols=None):
 
     symbols_list = symbols_list[:-1] if len(symbols_list) > 8 else symbols_list
     request = Request(LIVE_DATA_URL % (P_TYPE['http'], DOMAINS['sinahq'],
-                                          _random(), symbols_list))
-    text = urlopen(request, timeout=10).read()
+                                       _random(), symbols_list))
+    text = ''
+    count = 0
+    while count <= 3:
+        try:
+            text = urlopen(request, timeout=200).read()
+        except:
+            count += 1
+        else:
+            break
     text = text.decode('GBK')
     reg = re.compile(r'\="(.*?)\";')
     data = reg.findall(text)

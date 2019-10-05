@@ -21,12 +21,16 @@ class Fundamental(object):
     DOWNLOAD_PATH = '/Users/hero101/Downloads'
     ZENJIANCHI = 'data/zenjianchi.xml'
     YUZENJIAN = 'data/yuzenjian.xml'
+    JIEJINNEXT = 'data/jiejinnext.xml'
+    JIEJINPRE = 'data/jiejinpre.xml'
     YUZJ_TB = 'yuzenjian'
+    JIEJIN_TB = 'jiejin'
     ZENJC_TB = 'zenjianchi'
     FINA_TB = 'finance'
     BASIC_TB = 'basic'
     ANAL_FINA_TB = 'analyze_finance'
     INDUSTRY_TB = 'industry'
+    OPERATE_TB = 'operate'
     DOCTOR_TB = 'doctor'
     CONCEPT_TB = 'concept'
 
@@ -77,11 +81,24 @@ class Fundamental(object):
             {
                 'query_url': 'http://www.iwencai.com/stockpick/search?typed=1&preParams=&ts=1&f=3&qs=result_rewrite&selfsectsn=&querytype=stock&searchfilter=&tid=stockpick&w=最近8个月增减持计划&queryarea=',
                 'dest_file': Fundamental.ZENJIANCHI,
-                'sleep': 5
+                'sleep': 8
+            },
+            {
+                'query_url': 'http://www.iwencai.com/stockpick/search?typed=1&preParams=&ts=1&f=1&qs=result_rewrite&selfsectsn=&querytype=stock&searchfilter=&tid=stockpick&w=下个月解禁&queryarea=',
+                'dest_file': Fundamental.JIEJINNEXT,
+                'sleep': 8
+            },
+            {
+                'query_url': 'http://www.iwencai.com/stockpick/search?typed=1&preParams=&ts=1&f=1&qs=result_rewrite&selfsectsn=&querytype=stock&searchfilter=&tid=stockpick&w=上个月解禁&queryarea=',
+                'dest_file': Fundamental.JIEJINPRE,
+                'sleep': 8
             },
 
         ]
         with open(Fundamental.WENCAI_COOKIE) as f:
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            from selenium import webdriver
             cookie = json.load(f)
             chrome_options = Options()
             # chrome_options.add_argument('--headless')
@@ -92,15 +109,25 @@ class Fundamental(object):
                 driver = webdriver.Chrome(options=chrome_options)
                 driver.get(Fundamental.WENCAI_HOME_URL)
                 for key in cookie:
+                    print(key, cookie[key])
+                    if key in ['v', 'PHPSESSID', 'guidState']:
+                        continue
                     driver.add_cookie({'name': key, 'value': cookie[key]})
-                time.sleep(1)
                 driver.get(task['query_url'])
                 file_name = datetime.date.today().strftime('%Y-%m-%d.xls')
                 full_file_name = '%s/%s' % (Fundamental.DOWNLOAD_PATH, file_name)
                 if os.path.exists(full_file_name):
                     os.remove(full_file_name)
-                time.sleep(2)
-                driver.find_element_by_xpath("//div[@id='table_top_bar']//ul/li[contains(text(),'导数据')]").click();
+                time.sleep(1)
+                try:
+                    tip = driver.find_element_by_xpath(
+                        "//div[@class='popup_win hidden popup_tip_orange thead_drag_tip popup_tip']//span")
+                    tip.click()
+                except:
+                    pass
+                time.sleep(1)
+                f = driver.find_element_by_xpath("//div[@id='table_top_bar']//ul/li[contains(text(),'导数据')]")
+                f.click();
                 time.sleep(task['sleep'])
                 if os.path.exists(task['dest_file']):
                     os.remove(task['dest_file'])
@@ -113,7 +140,6 @@ class Fundamental(object):
                     f.write(json.dumps(cookie_update))
 
                 driver.close()
-                time.sleep(3)
 
         pass
 
@@ -153,6 +179,53 @@ class Fundamental(object):
         cursor = conn.cursor()
         cursor.execute("SELECT symbol,name FROM '%s'" % Fundamental.BASIC_TB)
         return {row[1]: row[0] for row in cursor}
+
+    @staticmethod
+    #   解禁信息处理
+    def jiejin():
+        table_name = Fundamental.JIEJIN_TB
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        cursor = conn.cursor()
+        cursor.execute("drop table if exists '%s'" % table_name)
+        cursor.execute(
+            '''create table if not exists '%s' (
+                                    code TEXT,
+                                    name TEXT,
+                                    date_ TEXT,
+                                    counts real,
+                                    pct real,
+                                    amount real,
+                                    type_ TEXT,
+                                    cost TEXT)'''
+            % table_name)
+        conn.close()
+
+        def _jiejin_fu(file):
+            # Fundamental.JIEJINPRE
+            with open(file) as f:
+                table_name = Fundamental.JIEJIN_TB
+                conn = sqlite3.connect(Fundamental.FUNDA_DB)
+                cursor = conn.cursor()
+                insert_sql = "insert into '%s' values (?,?,?,?,?,?,?,?)" % table_name
+                root = lxml.etree.HTML(f.read())
+                items = root.xpath('//tr')
+
+                for i in range(1, len(items)):
+                    tds = items[i].xpath('./td/text()')
+                    code = tds[0].strip()[0:-3]
+                    name = tds[1].strip()
+                    date_ = tds[4].strip()
+                    counts = tds[5].strip()
+                    pct = tds[6].strip()
+                    amount = tds[7].strip()
+                    type_ = tds[8].strip()
+                    cost = tds[10].strip()
+                    cursor.execute(insert_sql, (
+                        code, name, date_, counts, pct, amount, type_, cost))
+                conn.commit()
+
+        _jiejin_fu(Fundamental.JIEJINPRE)
+        _jiejin_fu(Fundamental.JIEJINNEXT)
 
     @staticmethod
     #   业绩预告处理
@@ -315,7 +388,7 @@ class Fundamental(object):
             report_date = root.xpath('//div[@class="data_tbody"]//table[@class="top_thead"]//th/div/text()')
             items = root.xpath('//div[@class="data_tbody"]//table[@class="tbody"]//tr')
             if items:
-                net_profit = items[1].xpath('./td/text()')
+                net_profit = items[1].xpath('./td/div/text()')
                 net_profit_rate = items[2].xpath('./td/text()')
                 kf_net_profit = items[3].xpath('./td/text()')
                 kf_net_profit_rate = items[4].xpath('./td/text()')
@@ -593,10 +666,41 @@ class Fundamental(object):
             # break
         pass
 
-    hot_concepts = ['5G', '华为', '芯片', 'OLED',
-                    '高送转', '半导体', '区块链',
-                    '黄金', '军工', '稀土', '集成电路', '人工智能',
-                    '光伏', '生物', '医药', '富时罗素', '白酒']
+    @staticmethod
+    def download_operate():
+        all_stocks = Fundamental.get_stocks()
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        table_name = Fundamental.OPERATE_TB
+        cursor = conn.cursor()
+        # cursor.execute("drop table if exists '%s'" % table_name)
+        cursor.execute(
+            '''create table if not exists '%s' (
+                                        code TEXT,
+                                        name TEXT,
+                                        operate TEXT)''' % table_name)
+        cursor.execute("select distinct code from '%s'" % table_name)
+        exist_codes = {row[0] for row in cursor}
+        insert_sql = "insert into '%s' values (?,?,?)" % table_name
+        req_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
+        }
+        count = 0
+        for stock in all_stocks:
+            print(count)
+            count += 1
+            if stock[0] in exist_codes:
+                continue
+            operate_url = 'http://basic.10jqka.com.cn/%s/operate.html' % stock[0]
+            operate_req = urllib.request.Request(operate_url, headers=req_headers)
+            operate_resp = urllib.request.urlopen(operate_req).read()
+            operate_root = lxml.etree.HTML(operate_resp)
+            operate = operate_root.xpath('//div[@class="mt15"]//li/p/text()')[0]
+            # print(stock[0], stock[1], operate)
+            cursor.execute(insert_sql, (
+                stock[0], stock[1], operate))
+            conn.commit()
+            # break
+        pass
 
     @staticmethod
     def get_codes_by_concept(concepts):
@@ -616,10 +720,56 @@ class Fundamental(object):
         result = []
         for target in targets:
             if len(target) != 6:
-                result.append(names[target])
+                if target in names:
+                    result.append(names[target])
             else:
                 result.append(target)
         return result
+
+    @staticmethod
+    def update_bellwether():
+
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        table_name = Fundamental.CONCEPT_TB
+        cursor = conn.cursor()
+        cursor.execute("select code,concept from %s" % table_name)
+        concepts = {row[0]: row[1].split(',') for row in cursor}
+        cpts = set()
+        codes = []
+        for code in concepts:
+            cs = set(concepts[code])
+            if cs - cpts:
+                codes.append(code)
+                cpts |= cs
+        bellwether = {}
+        req_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
+        }
+        count = 0
+        for stock in codes:
+            print(count)
+            count += 1
+            concept_url = 'http://basic.10jqka.com.cn/%s/concept.html' % stock
+            concept_req = urllib.request.Request(concept_url, headers=req_headers)
+            concept_resp = urllib.request.urlopen(concept_req).read()
+            concept_root = lxml.etree.HTML(concept_resp)
+
+            normal = concept_root.xpath("//div[@id='concept']//tbody/tr")
+            for i in range(int(len(normal) / 2)):
+                c = normal[i * 2].xpath('./td/text()')[1].strip()
+                bw = normal[i * 2].xpath('./td/a/text()')
+                bellwether[c] = bw
+
+        hot_concepts = ','.join(u_read_input('data/hot_concepts'))
+        allbw = set()
+        hotbw = set()
+        for c in bellwether:
+            allbw |= set(bellwether[c])
+            if c in hot_concepts:
+                hotbw |= set(bellwether[c])
+        u_write_to_file('/Users/hero101/Documents/t_bw_all.txt', Fundamental.name_to_codes(allbw))
+        u_write_to_file('/Users/hero101/Documents/t_bw_hot.txt', Fundamental.name_to_codes(hotbw))
+        pass
 
     @staticmethod
     def download_concept():
@@ -628,6 +778,7 @@ class Fundamental(object):
         table_name = Fundamental.CONCEPT_TB
         cursor = conn.cursor()
         # cursor.execute("drop table if exists '%s'" % table_name)
+        bellwether = {}
         cursor.execute(
             '''create table if not exists '%s' (
                                         code TEXT,
@@ -655,7 +806,12 @@ class Fundamental(object):
             normal = concept_root.xpath("//div[@id='concept']//tbody/tr")
             n_c = []
             for i in range(int(len(normal) / 2)):
-                n_c.append(normal[i * 2].xpath('./td/text()')[1].strip())
+                c = normal[i * 2].xpath('./td/text()')[1].strip()
+                n_c.append(c)
+                bw = normal[i * 2].xpath('./td/a/text()')
+                bellwether[c] = bw
+                # print(c)
+                # print(bw)
             emerging = concept_root.xpath("//div[@id='emerging']//tbody/tr")
             n_e = []
             for i in range(int(len(emerging) / 2)):
@@ -669,6 +825,19 @@ class Fundamental(object):
                 stock[0], stock[1], ','.join(n_c), ','.join(n_e), ','.join(n_o)))
             conn.commit()
             # break
+
+        hot_concepts = ','.join(u_read_input('data/hot_concepts'))
+        allbw = set()
+        hotbw = set()
+        for c in bellwether:
+            allbw |= set(bellwether[c])
+            if c in hot_concepts:
+                hotbw |= set(bellwether[c])
+        u_write_to_file('/Users/hero101/Documents/t_bw_all.txt', Fundamental.name_to_codes(allbw))
+        u_write_to_file('/Users/hero101/Documents/t_bw_hot.txt', Fundamental.name_to_codes(hotbw))
+
+        # u_write_to_file('/Users/hero101/Documents/t_bellwether.txt',
+        #                 ['%s:%s' % (k, ','.join(bellwether[k])) for k in bellwether])
         pass
 
     @staticmethod
@@ -677,6 +846,7 @@ class Fundamental(object):
         Fundamental.download_from_wencai()
         Fundamental.zenjianchi()
         Fundamental.yuzenjian()
+        Fundamental.jiejin()
         Fundamental.export_txt()
 
         pass
@@ -707,8 +877,10 @@ class Fundamental(object):
         cursor.execute("select distinct code from '%s'" % table_name)
         exist_codes = {row[0] for row in cursor}
         insert_sql = "insert into '%s' values (?,?,?,?,?,?,?,?,?,?,?,?,?)" % table_name
+
         req_headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 5.1; rv:5.0) Gecko/20100101 Firefox/5.0',
+            "User-Agent":
+                "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36"
         }
         count = 0
         today = u_day_befor(0)
@@ -719,8 +891,11 @@ class Fundamental(object):
             if stock[0] in exist_codes:
                 continue
 
-            if count % 100 == 0:
-                time.sleep(15)
+            # if count % 100 == 0:
+            #     time.sleep(60)
+            #
+            # if count % 2000 == 0:
+            #     time.sleep(600)
 
             cpr = 50  # 综合排名比
             cpl = ''  # 综合评级
@@ -737,8 +912,11 @@ class Fundamental(object):
             minr = 0.0  # 主力机构持股占比
 
             doctor_url = 'http://doctor.10jqka.com.cn/%s/' % stock[0]
+            # proxy = u_get_proxy().get("proxy")
+            # proxy_handler = urllib.request.ProxyHandler({"http": proxy})
+            # opener = urllib.request.build_opener(proxy_handler)
             doctor_req = urllib.request.Request(doctor_url, headers=req_headers)
-            doctor_resp = urllib.request.urlopen(doctor_req).read()
+            doctor_resp = urllib.request.urlopen(doctor_req, timeout=100).read()
             doctor_root = lxml.etree.HTML(doctor_resp)
             cpr_text = doctor_root.xpath('//div[@class="stocktotal"]/text()')
             if not cpr_text:
@@ -772,17 +950,11 @@ class Fundamental(object):
             bsr_text = doctor_root.xpath('//div[@class="box2wrap basic_score"]//span[@class="gray"]/text()')[0]
             bsr = int(re.findall(r"打败了(.+?)%的股票", bsr_text)[0])
 
-            # avgp_text = doctor_root.xpath('//div[contains(text(),"近期的平均成本为")]/strong/text()')[0]
-            # avgp = float(avgp_text.strip('元'))
-            # rsp_text = doctor_root.xpath('//div[contains(text(),"该股压力位")]/text()')[0]
-            # rstp, sptp = re.findall(r"压力位为(.+?)元.+?支撑位为(.+?)元", rsp_text)[0]
-            # rstp = float(rstp)
-            # sptp = float(sptp)
-
             cursor.execute(insert_sql, (
                 stock[0], stock[1], cpr, tcr, fdr, mgr, inr, bsr, cpl, cyw,
                 minc, minr, today))
             conn.commit()
+            time.sleep(0.35)
             # break
         pass
 
@@ -796,6 +968,7 @@ class Fundamental(object):
             Fundamental.BASIC_TB,
             Fundamental.ANAL_FINA_TB,
             Fundamental.INDUSTRY_TB,
+            Fundamental.OPERATE_TB,
             Fundamental.CONCEPT_TB,
         ]
         for table in tables:
@@ -803,6 +976,7 @@ class Fundamental(object):
 
         Fundamental.download_basic()
         Fundamental.download_industry()
+        Fundamental.download_operate()
         Fundamental.download_concept()
         Fundamental.download_finance_data()
         Fundamental.analyze_finance_data()
@@ -824,6 +998,10 @@ class Fundamental(object):
         cursor.execute("select field1,field2,field3 from '%s' where code='%s'" % (Fundamental.INDUSTRY_TB, code))
         result = [row for row in cursor]
         fld1, fld2, fld3 = result[0] if result else ('', '', '')
+
+        cursor.execute("select operate from '%s' where code='%s'" % (Fundamental.OPERATE_TB, code))
+        result = [row for row in cursor]
+        oper, = result[0] if result else ('',)
 
         cursor.execute("select cpr,tcr,fdr,mgr,inr,bsr,cpl,cyw,minc,minr from '%s' where code='%s'" % (
             Fundamental.DOCTOR_TB, code))
@@ -850,6 +1028,17 @@ class Fundamental(object):
                 item_info = '\n  %s 初次公告 %s计划   %10.1f股  占比%4.2f%%  %s' % item
                 zjc_info += item_info
 
+        jiejin_info = "最近1个月解禁情况：    无"
+        cursor.execute(
+            "select date_, type_,pct,cost from '%s' where code='%s' " % (
+                Fundamental.JIEJIN_TB, code,))
+        jiejin = [row for row in cursor]
+        if jiejin:
+            jiejin_info = "最近1个月解禁情况："
+            for item in jiejin:
+                item_info = '\n  %s     %s  解禁      占比%4.2f%%       成本   %s元' % item
+                jiejin_info += item_info
+
         cursor.execute(''' select lrvr,lnpr,lkfnpr,
                             rv,np,kfnp,rvr1,rvr2,rvr3,rvr4,
                             npr1,npr2,npr3,npr4,
@@ -864,7 +1053,8 @@ class Fundamental(object):
          npr1, npr2, npr3, npr4,
          kfnpr1, kfnpr2, kfnpr3, kfnpr4) = result[0]
 
-        info = '''%s(%s)   所在地:%s  上市日期:%s   %s-%s-%s  
+        info = '''%s(%s)   所在地:%s  上市日期:%s   %s-%s-%s   
+主营业务:   %s
 概念题材:   %s
 诊断信息：
     评级:%s   综合 %s%%   技术面 %s%%   资金面 %s%%   消息面 %s%%   行业面 %s%%   基本面 %s%%    
@@ -875,21 +1065,47 @@ class Fundamental(object):
           净利润        %8.5f亿     历年同比 %s%%   %s%%   %s%%   %s%%
           扣非净利润     %8.5f亿     历年同比 %s%%   %s%%   %s%%   %s%%
 %s
+%s
 ''' % (
-            name, code, area, list_date, fld1, fld2, fld3, ','.join(concept),
+            name, code, area, list_date, fld1, fld2, fld3, oper, ','.join(concept),
             cpl, cpr, tcr, fdr, mgr, inr, bsr, minc, minr, cyw,
             yzj_info,
             lrvr, lnpr, lkfnpr,
             rv, rvr4, rvr3, rvr2, rvr1,
             np, npr4, npr3, npr2, npr1,
             kfnp, kfnpr4, kfnpr3, kfnpr2, kfnpr1,
-            zjc_info
+            zjc_info,
+            jiejin_info
         )
         return info
         # print(info)
 
     @staticmethod
+    def select_doctor_codes():
+        concepts = u_read_input('data/hot_concepts')
+        concepts_codes = Fundamental.get_codes_by_concept(concepts)
+        conn = sqlite3.connect(Fundamental.FUNDA_DB)
+        table_name = Fundamental.DOCTOR_TB
+        cursor = conn.cursor()
+        cursor.execute(
+            '''select distinct code from '%s' where 
+            cpr > 50 and 
+            fdr > 30 and 
+            bsr > 50 and 
+            mgr > 30 and 
+            inr >30 and 
+            cpl != '减持' and 
+            minc < 100 and 
+            cyw != '没有控盘' ''' % (
+                table_name,))
+        codes = [row[0] for row in cursor if row[0] in concepts_codes]
+        codes = Fundamental.remove_st(codes)
+
+        return codes
+
+    @staticmethod
     def daily_run2():
+
         conn = sqlite3.connect(Fundamental.FUNDA_DB)
         cursor = conn.cursor()
         tables = [
@@ -900,27 +1116,22 @@ class Fundamental(object):
             cursor.execute("drop table if exists '%s'" % table)
             pass
         Fundamental.download_doctor()
+        u_write_to_file('/Users/hero101/Documents/t_doctor_all.txt', Fundamental.select_doctor_codes())
         cursor.execute("create table if not exists doc_hist as select * from %s where 1=0" % Fundamental.DOCTOR_TB)
+        cursor.execute("delete from doc_hist where date='%s'" % u_day_befor(0))
+        conn.commit()
         cursor.execute("insert into doc_hist select * from %s" % Fundamental.DOCTOR_TB)
         conn.commit()
+
+        Fundamental.update_bellwether()
 
     @staticmethod
     def check_doctor():
         from mytushare import get_realtime_quotes
-        table_name = Fundamental.DOCTOR_TB
         overflow = 2.8
-        concepts = Fundamental.hot_concepts
-        concepts_codes = Fundamental.get_codes_by_concept(concepts)
-        conn = sqlite3.connect(Fundamental.FUNDA_DB)
-        cursor = conn.cursor()
-        cursor.execute(
-            "select distinct code from '%s' where tcr < 80 and cpr > 50 and fdr > 50 and bsr > 50 and cpl != '减持' and minc < 100 " % (
-                table_name,))
-
-        codes = [row[0] for row in cursor if row[0] in concepts_codes]
-        codes = Fundamental.remove_st(codes)
+        codes = Fundamental.select_doctor_codes()
         if codes:
-            results = []
+            results = {}
             df = get_realtime_quotes([key for key in codes])
             for index, row in df.iterrows():
                 code = row['code']
@@ -928,16 +1139,17 @@ class Fundamental(object):
                 price = float(row['price'])
                 rcp = round((price / pre_close - 1) * 100, 2)
                 if rcp > overflow:
-                    results.append(code)
+                    results[code] = price
             u_write_to_file('/Users/hero101/Documents/t_doctor_check.txt', results)
             return results
-        return []
+        return {}
 
 
 if __name__ == '__main__':
     import cProfile
 
     # Fundamental.download_from_wencai()
+    # Fundamental.jiejin()
     # Fundamental.yuzenjian()
     # Fundamental.zenjianchi()
     # Fundamental.export_txt()
@@ -958,5 +1170,7 @@ if __name__ == '__main__':
     # Fundamental.create_wencai_cookie()
     # cProfile.run('Fundamental.update_fundamental()')
     # cProfile.run('Fundamental.download_doctor()')
-    cProfile.run('Fundamental.daily_run2()')
+    # cProfile.run('Fundamental.daily_run2()')
+    # Fundamental.update_bellwether()
+    # Fundamental.download_operate()
     pass

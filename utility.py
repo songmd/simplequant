@@ -3,6 +3,12 @@ import sqlite3
 import datetime
 from dateutil.relativedelta import relativedelta
 
+import requests
+
+
+def u_get_proxy():
+    return requests.get("http://127.0.0.1:5010/get/").json()
+
 
 def u_format_list(ls):
     return ','.join(["'%s'" % e for e in ls])
@@ -53,6 +59,10 @@ def u_day_befor(d):
     day -= datetime.timedelta(days=d)
     return day.strftime('%Y%m%d')
 
+def u_time_now():
+    now = datetime.datetime.now()
+
+    return now.strftime('%H:%M:%S')
 
 def u_week_contain(day):
     dt = datetime.datetime.strptime(day, '%Y%m%d').date()
@@ -60,11 +70,29 @@ def u_week_contain(day):
     return next_week.strftime('%Y%m%d')
 
 
+def u_week_begin(day=''):
+    if day:
+        dt = datetime.datetime.strptime(day, '%Y%m%d').date()
+    else:
+        dt = datetime.datetime.now()
+    week_begin = dt + datetime.timedelta(days=-dt.weekday())
+    return week_begin.strftime('%Y%m%d')
+
+
 def u_month_contain(day):
     dt = datetime.datetime.strptime(day, '%Y%m%d').date()
     dt -= datetime.timedelta(days=dt.day - 1)
     next_month = dt + relativedelta(months=1)
     return next_month.strftime('%Y%m%d')
+
+
+def u_month_begin(day=''):
+    if day:
+        dt = datetime.datetime.strptime(day, '%Y%m%d').date()
+    else:
+        dt = datetime.datetime.now()
+    dt -= datetime.timedelta(days=dt.day - 1)
+    return dt.strftime('%Y%m%d')
 
 
 def u_quarter_contain(day):
@@ -80,6 +108,15 @@ def u_year_contain(day):
     dt = datetime.date(dt.year, 1, 1)
     next_year = dt + relativedelta(years=1)
     return next_year.strftime('%Y%m%d')
+
+
+def u_year_begin(day=''):
+    if day:
+        dt = datetime.datetime.strptime(day, '%Y%m%d').date()
+    else:
+        dt = datetime.datetime.now()
+    dt = datetime.date(dt.year, 1, 1)
+    return dt.strftime('%Y%m%d')
 
 
 def u_half_year_contain(day):
@@ -104,7 +141,7 @@ def u_read_input(file_name='input.txt'):
             if line:
                 line = line.strip()
                 if line and (line not in lines):
-                    lines.append(line.replace('SH','').replace('SZ',''))
+                    lines.append(line.replace('SH', '').replace('SZ', ''))
             else:
                 break
         return lines
@@ -118,6 +155,18 @@ def u_write_to_file(file_name, ds):
 
 def u_calc_ratio(pre, now):
     return round((now / pre - 1) * 100, 2)
+
+
+def u_itchat_send_file(file, toUserName=None):
+    import itchat
+    count = 0
+    while count <= 3:
+        try:
+            itchat.send_file(file, toUserName=toUserName)
+        except:
+            count += 1
+        else:
+            break
 
 
 if __name__ == '__main__':

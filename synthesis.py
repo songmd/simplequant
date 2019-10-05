@@ -10,7 +10,7 @@ from utility import *
 
 def synthesis(input):
     file_name = os.path.split(input)[1]
-    file_path = 'data/dgn_%s' % (file_name,)
+    file_path = 'data/dgn/dgn_%s' % (file_name,)
     # no = 1
     # while True:
     #     file_path = 'dgn_%s_%s.txt' % (file_name, no,)
@@ -35,6 +35,9 @@ def synthesis(input):
 def daily_synthesis():
     synthesis('data/position.txt')
     synthesis('data/attention.txt')
+    synthesis('/Users/hero101/Documents/t_bw_all.txt')
+    synthesis('/Users/hero101/Documents/t_bw_hot.txt')
+    synthesis('/Users/hero101/Documents/t_doctor_all.txt')
     synthesis('/Users/hero101/Documents/t_acti_today.txt')
     synthesis('/Users/hero101/Documents/t_macd_today.txt')
     synthesis('/Users/hero101/Documents/t_ss_today.txt')
@@ -48,11 +51,14 @@ if __name__ == '__main__':
     import cProfile
 
     synthesis('data/input.txt')
-    synthesis('data/position.txt')
-    synthesis('data/attention.txt')
-    synthesis('/Users/hero101/Documents/t_acti_today.txt')
-    synthesis('/Users/hero101/Documents/t_macd_today.txt')
-    synthesis('/Users/hero101/Documents/t_ss_today.txt')
-    synthesis('/Users/hero101/Documents/t_acti_check.txt')
-    synthesis('/Users/hero101/Documents/t_macd_check.txt')
-    synthesis('/Users/hero101/Documents/t_doctor_check.txt')
+    # synthesis('data/position.txt')
+    # synthesis('data/attention.txt')
+    # synthesis('/Users/hero101/Documents/t_bw_all.txt')
+    # synthesis('/Users/hero101/Documents/t_bw_hot.txt')
+    # synthesis('/Users/hero101/Documents/t_doctor_all.txt')
+    # synthesis('/Users/hero101/Documents/t_acti_today.txt')
+    # synthesis('/Users/hero101/Documents/t_macd_today.txt')
+    # synthesis('/Users/hero101/Documents/t_ss_today.txt')
+    # synthesis('/Users/hero101/Documents/t_acti_check.txt')
+    # synthesis('/Users/hero101/Documents/t_macd_check.txt')
+    # synthesis('/Users/hero101/Documents/t_doctor_check.txt')

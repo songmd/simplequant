@@ -296,8 +296,37 @@ class DataHandler(object):
     }
 
     @staticmethod
-    def download_index():
+    def get_index_base(begin_date, end_date):
+        conn = sqlite3.connect(DataHandler.COOKECD_DB)
+        cursor = conn.cursor()
+        table_name = 'daily_index'
 
+        days = u_read_input(DataHandler.CAL_TXT)
+        end_cal = ''
+        begin_cal = ''
+        for day in reversed(days):
+            if end_cal == '' and day <= end_date:
+                end_cal = day
+            if begin_cal == '' and day < begin_date:
+                begin_cal = day
+            if begin_cal and end_cal:
+                break
+
+        cursor.execute("select name,close_ from '%s' where trade_date='%s' " % (
+            table_name, begin_cal))
+        begin_inds = {row[0]: row[1] for row in cursor}
+        cursor.execute("select name,close_ from '%s' where trade_date='%s' " % (
+            table_name, end_cal))
+        end_inds = {row[0]: row[1] for row in cursor}
+
+        base_inds = {}
+        for key in begin_inds:
+            base_inds[key] = round((end_inds[key] / begin_inds[key] - 1) * 100, 2)
+
+        return base_inds
+
+    @staticmethod
+    def download_index():
         conn = sqlite3.connect(DataHandler.COOKECD_DB)
         cursor = conn.cursor()
         cursor.execute('''
@@ -859,6 +888,20 @@ class DataHandler(object):
         pass
 
     @staticmethod
+    def get_history_price(stocks, trading_date):
+        conn = sqlite3.connect(DataHandler.COOKECD_DB)
+        cursor = conn.cursor()
+        result = {}
+        for stock in stocks:
+            cursor.execute(
+                '''select code,close_ from main.daily 
+                where trade_date<='%s' and code ='%s' 
+                order by trade_date desc limit 1 ''' % (trading_date, stock))
+            r = [row for row in cursor][0]
+            result[r[0]] = r[1]
+        return result
+
+    @staticmethod
     def get_stock_concepts(codes):
         conn = sqlite3.connect(DataHandler.RAW_DB)
         cursor = conn.cursor()
@@ -952,7 +995,7 @@ class DataHandler(object):
     @staticmethod
     def check_macd():
         from fundamental import Fundamental
-        concepts = Fundamental.hot_concepts
+        concepts = u_read_input('data/hot_concepts')
         concept_codes = Fundamental.get_codes_by_concept(concepts)
 
         overflow = 1.8
@@ -970,7 +1013,7 @@ class DataHandler(object):
         for row in cursor:
             targets[row[0]] = (row[1], row[2])
         # print(len(targets))
-        results = []
+        results = {}
         if targets:
             df = get_realtime_quotes([key for key in targets])
             for index, row in df.iterrows():
@@ -981,7 +1024,7 @@ class DataHandler(object):
                     rcp = round((price / pre_close - 1) * 100, 2)
                     # print(rcp,targets[code][1])
                     if rcp > targets[code][0] + overflow:
-                        results.append(code)
+                        results[code] = price
 
         u_write_to_file('/Users/hero101/Documents/t_macd_check.txt', results)
         return results
@@ -994,7 +1037,7 @@ class DataHandler(object):
         }
 
         from fundamental import Fundamental
-        concepts = Fundamental.hot_concepts
+        concepts = u_read_input('data/hot_concepts')
         concept_codes = Fundamental.get_codes_by_concept(concepts)
 
         conn = sqlite3.connect(DataHandler.COOKECD_DB)
@@ -1281,5 +1324,7 @@ if __name__ == '__main__':
     # DataHandler.get_tech_index_info('603106')
     # DataHandler.create_today_table()
     # DataHandler.select_today_macd()
-    DataHandler.create_today_super_stock()
+    # DataHandler.create_today_super_stock()
+    DataHandler.run_daily_batch()
+    DataHandler.create_today_table()
     pass

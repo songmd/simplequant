@@ -1,5 +1,5 @@
 import sqlite3
-
+import os
 import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -12,6 +12,11 @@ def u_get_proxy():
 
 def u_format_list(ls):
     return ','.join(["'%s'" % e for e in ls])
+
+
+def u_mk_dir(dir):
+    if not os.path.isdir(dir):
+        os.mkdir(dir)
 
 
 # def u_save_bk_result(res):
@@ -47,6 +52,17 @@ def u_format_list(ls):
 #         w_rate = round(row[1] * 100 / row[0], 3)
 #         print("buy_time:%s  r_rate:%s   w_rate:%s" % (row[0], r_rate, w_rate))
 
+def u_get_realtime_price(targets):
+    from mytushare import get_realtime_quotes
+    if targets:
+        result = {}
+        df = get_realtime_quotes([key for key in targets])
+        for index, row in df.iterrows():
+            code = row['code']
+            result[code] = float(row['price'])
+        return result
+    return {}
+
 
 def u_month_befor(m):
     d = datetime.datetime.today()
@@ -59,10 +75,28 @@ def u_day_befor(d):
     day -= datetime.timedelta(days=d)
     return day.strftime('%Y%m%d')
 
+
 def u_time_now():
     now = datetime.datetime.now()
 
     return now.strftime('%H:%M:%S')
+
+
+def u_days_diff(start_day, end_day):
+    if not start_day:
+        return 0
+    s_dt = datetime.datetime.strptime(start_day, '%Y%m%d')
+    e_dt = datetime.datetime.strptime(end_day, '%Y%m%d')
+
+    diff = e_dt - s_dt
+    return diff.days
+
+
+def u_time_now_filename():
+    now = datetime.datetime.now()
+
+    return now.strftime('%H%M%S')
+
 
 def u_week_contain(day):
     dt = datetime.datetime.strptime(day, '%Y%m%d').date()
@@ -84,6 +118,12 @@ def u_month_contain(day):
     dt -= datetime.timedelta(days=dt.day - 1)
     next_month = dt + relativedelta(months=1)
     return next_month.strftime('%Y%m%d')
+
+
+def u_month_after(day, m):
+    dt = datetime.datetime.strptime(day, '%Y%m%d').date()
+    dt += relativedelta(months=m)
+    return dt.strftime('%Y%m%d')
 
 
 def u_month_begin(day=''):
@@ -153,6 +193,23 @@ def u_write_to_file(file_name, ds):
             wfile.writelines(str(e) + '\n')
 
 
+def u_file_intersection(files):
+    if not files:
+        return []
+    ret = set(u_read_input(files[0]))
+    for file in files[1:]:
+        ret &= set(u_read_input(file))
+    return ret
+
+
+def u_write_to_file_append(file_name, ds):
+    exist_lines = u_read_input(file_name)
+    with open(file_name, 'a') as wfile:
+        for e in ds:
+            if e not in exist_lines:
+                wfile.writelines('\n' + str(e))
+
+
 def u_calc_ratio(pre, now):
     return round((now / pre - 1) * 100, 2)
 
@@ -173,4 +230,7 @@ if __name__ == '__main__':
     #   import cProfile
 
     # cProfile.run('profile_run2()')
-    u_read_input()
+    # u_read_input()
+    # print(u_days_diff('20200416','20200416'))
+    print(u_file_intersection(['data/input.txt', 'data/attention.txt']))
+    pass

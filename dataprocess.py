@@ -174,11 +174,20 @@ class DataHandler(object):
     @staticmethod
     def download_trade_cal():
         pro = ts.pro_api()
-        df = pro.trade_cal(exchange='', start_date='20140101', end_date=datetime.date.today().strftime('%Y%m%d'))
+        # print(datetime.date.today().strftime('%Y%m%d'))
+
+        end_date = u_day_befor(0)
+        now = datetime.datetime.now()
+        if now.hour <= 15:
+            end_date = u_day_befor(1)
+
+        df = pro.trade_cal(exchange='', start_date=u_month_befor(42), end_date=end_date)
         cal = []
         for i in range(len(df)):
             if df['is_open'][i] == 1:
+                # print(df['cal_date'][i])
                 cal.append(df['cal_date'][i])
+
         u_write_to_file(DataHandler.CAL_TXT, cal)
 
     @staticmethod
@@ -307,7 +316,7 @@ class DataHandler(object):
         for day in reversed(days):
             if end_cal == '' and day <= end_date:
                 end_cal = day
-            if begin_cal == '' and day < begin_date:
+            if begin_cal == '' and day <= begin_date:
                 begin_cal = day
             if begin_cal and end_cal:
                 break
@@ -379,7 +388,7 @@ class DataHandler(object):
         pro = ts.pro_api()
         for code in DataHandler.main_index:
             print(code)
-            df = pro.index_daily(ts_code=code, start_date='20140101', end_date=today)
+            df = pro.index_daily(ts_code=code, start_date=u_month_befor(42), end_date=today)
             date = df['trade_date'].tolist()[::-1]
             open_ = df['open'].tolist()[::-1]
             high = df['high'].tolist()[::-1]
@@ -676,6 +685,41 @@ class DataHandler(object):
 
         dest_cursor.execute('create index datecode on daily(code,trade_date);')
         dest_conn.commit()
+
+    @staticmethod
+    def get_list_date():
+        conn = sqlite3.connect(DataHandler.RAW_DB)
+        cursor = conn.cursor()
+        cursor.execute(
+            "select symbol,list_date from basic")
+        return {row[0]: row[1] for row in cursor}
+
+    @staticmethod
+    def get_monster(limit, month):
+        from synthesis import synthesis
+        conn = sqlite3.connect(DataHandler.COOKECD_DB)
+        cursor = conn.cursor()
+        list_date = DataHandler.get_list_date()
+        result = []
+        for key in list_date:
+            if limit < 100:
+                cursor.execute(
+                    "select code, trade_date from daily where code ='%s' and trade_date>'%s' and trade_date >'%s' and q10>%s order by trade_date desc" % (
+                        key, u_month_after(list_date[key], 2), u_month_befor(month), limit))
+            else:
+                cursor.execute(
+                    "select code, trade_date from daily where code ='%s' and trade_date>'%s' and trade_date >'%s' and q20>%s order by trade_date desc" % (
+                        key, u_month_after(list_date[key], 2), u_month_befor(month), limit))
+
+            for code, date in cursor:
+                result.append((code, date))
+                break
+        result.sort(key=lambda s: s[1], reverse=True)
+
+        u_write_to_file('data/monster_%s_%s.txt' % (limit, month), [e[0] for e in result])
+        u_write_to_file('/Users/hero101/Documents/t_monster_%s_%s.txt' % (limit, month), [e[0] for e in result])
+        synthesis('data/monster_%s_%s.txt' % (limit, month))
+        return result
 
     @staticmethod
     def get_codes():
@@ -1181,11 +1225,11 @@ boll线： %s    收盘价距上轨 %s%%   中轨 %s%%    下轨 %s%%
         for index, row in df_today.iterrows():
             ts_code = index + '.SH' if index[0] == '6' else index + '.SZ'
             list_date.append(df_basic['list_date'][index])
-            turnover_rate_f.append(df_daily_basic['turnover_rate_f'][ts_code])
-            volume_ratio.append(df_daily_basic['volume_ratio'][ts_code])
-            pe.append(df_daily_basic['pe'][ts_code])
-            circ_mv.append(df_daily_basic['circ_mv'][ts_code])
-            total_mv.append(df_daily_basic['total_mv'][ts_code])
+            turnover_rate_f.append(df_daily_basic.get('turnover_rate_f').get(ts_code, 0))
+            volume_ratio.append(df_daily_basic.get('volume_ratio').get(ts_code, 0))
+            pe.append(df_daily_basic.get('pe').get(ts_code, 0))
+            circ_mv.append(df_daily_basic.get('circ_mv').get(ts_code, 0))
+            total_mv.append(df_daily_basic.get('total_mv').get(ts_code, 0))
 
         df_today.insert(1, 'vol_r', volume_ratio)
         df_today.insert(3, 't_r_f', turnover_rate_f)
@@ -1214,7 +1258,7 @@ def profile_run():
 
 
 def profile_run1():
-    DataHandler.cook_raw_db('20160701')
+    DataHandler.cook_raw_db(u_month_befor(42))
     DataHandler.create_today_table()
     # DataHandler.select_today_macd()
     DataHandler.download_index()
@@ -1224,16 +1268,27 @@ def profile_run1():
 def dh_daily_run():
     DataHandler.run_daily_batch()
     # DataHandler.download_concept_detail()
-    DataHandler.cook_raw_db('20160701')
+    DataHandler.cook_raw_db(u_month_befor(42))
     DataHandler.create_today_table()
     DataHandler.create_today_super_stock()
     DataHandler.select_today_macd()
     DataHandler.download_index()
+    # DataHandler.get_monster(90, 24)
+    # DataHandler.get_monster(80, 12)
+    # DataHandler.get_monster(70, 12)
+    # DataHandler.get_monster(60, 12)
     # DataHandler.create_attention_ex()
 
 
 def dh_check_macd():
     return DataHandler.check_macd()
+
+
+def dh_get_monster():
+    DataHandler.get_monster(150, 24)
+    DataHandler.get_monster(90, 24)
+    DataHandler.get_monster(80, 12)
+    DataHandler.get_monster(60, 12)
 
 
 def profile_run2():
@@ -1325,6 +1380,10 @@ if __name__ == '__main__':
     # DataHandler.create_today_table()
     # DataHandler.select_today_macd()
     # DataHandler.create_today_super_stock()
-    DataHandler.run_daily_batch()
-    DataHandler.create_today_table()
+    # DataHandler.run_daily_batch()
+    # DataHandler.create_today_table()
+    # dh_daily_run()
+    # monster = DataHandler.get_monster(80, 12)
+    # print(monster)
+    dh_get_monster()
     pass

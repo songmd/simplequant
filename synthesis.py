@@ -8,9 +8,14 @@ import sqlite3
 from utility import *
 
 
-def synthesis(input):
+def synthesis(input, dir=''):
     file_name = os.path.split(input)[1]
-    file_path = 'data/dgn/dgn_%s' % (file_name,)
+    if dir == '':
+        file_path = 'data/dgn/dgn_%s' % (file_name,)
+    else:
+        path = 'data/dgn/%s' % dir
+        u_mk_dir(path)
+        file_path = '%s/dgn_%s' % (path, file_name)
     # no = 1
     # while True:
     #     file_path = 'dgn_%s_%s.txt' % (file_name, no,)
@@ -27,32 +32,46 @@ def synthesis(input):
             fundamental = Fundamental.get_fundamental(code)
             picking_info = get_picking_info(code)
             tech_info = DataHandler.get_tech_index_info(code)
-            synthesis_info = '%s\n%s\n%s' % (fundamental, tech_info,picking_info)
+            synthesis_info = '%s\n%s\n%s' % (fundamental, tech_info, picking_info)
             wfile.write(synthesis_info)
             wfile.write("\n\n\n")
     pass
 
+
 def daily_synthesis():
     synthesis('data/position.txt')
     synthesis('data/attention.txt')
-    synthesis('/Users/hero101/Documents/t_bw_all.txt')
+    synthesis('data/selection.txt')
+    # synthesis('/Users/hero101/Documents/t_bw_all.txt')
     synthesis('/Users/hero101/Documents/t_bw_hot.txt')
     synthesis('/Users/hero101/Documents/t_doctor_all.txt')
     synthesis('/Users/hero101/Documents/t_acti_today.txt')
+    synthesis('/Users/hero101/Documents/t_acti_lht.txt')
     synthesis('/Users/hero101/Documents/t_macd_today.txt')
     synthesis('/Users/hero101/Documents/t_ss_today.txt')
     synthesis('/Users/hero101/Documents/t_acti_check.txt')
     synthesis('/Users/hero101/Documents/t_macd_check.txt')
     synthesis('/Users/hero101/Documents/t_doctor_check.txt')
-
+    synthesis('/Users/hero101/Documents/t_yuzen_check.txt')
 
 
 if __name__ == '__main__':
     import cProfile
 
-    synthesis('data/input.txt')
+    # daily_synthesis()
+    # synthesis('data/input.txt')
+    # synthesis('/Users/hero101/Documents/t_acti_lht.txt')
+    # ret = u_file_intersection([
+    #     'data/input.txt',
+    #     'data/input2.txt',
+    #     # '',
+    #
+    # ])
+    # u_write_to_file('data/output.txt',ret)
+    # synthesis('data/output.txt')
     # synthesis('data/position.txt')
     # synthesis('data/attention.txt')
+    # synthesis('data/selection.txt')
     # synthesis('/Users/hero101/Documents/t_bw_all.txt')
     # synthesis('/Users/hero101/Documents/t_bw_hot.txt')
     # synthesis('/Users/hero101/Documents/t_doctor_all.txt')

@@ -6,6 +6,7 @@ from synthesis import daily_synthesis
 from fundamental import Fundamental
 
 from position import PositionMgr
+from rtm import daily_stat_rtm
 
 
 def daily_run():
@@ -22,6 +23,7 @@ def daily_run():
     Fundamental.daily_run()
     PositionMgr.daily_run()
     daily_synthesis()
+    daily_stat_rtm()
     pass
 
 

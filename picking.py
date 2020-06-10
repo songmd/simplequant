@@ -318,7 +318,8 @@ def calc_rps():
 def all_acti():
     table_name = 'allacti'
     scope = WAVE_SCOPE_THRESHOLD
-    stat_activity('allacti', True, scope, '20170101', u_month_befor(0))
+    indent = 7
+    stat_activity('allacti', True, scope, u_month_befor(indent*4), u_month_befor(0))
     # (waves > 30 and activity < 32) or (waves > 20 and activity < 30)
     conn = sqlite3.connect(PICKING_DB)
     cursor = conn.cursor()
@@ -332,15 +333,46 @@ def all_acti():
             table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD, LIMIT_COUNT_THRESHOLD))
     u_write_to_file('/Users/hero101/Documents/t_acti_today.txt', Fundamental.remove_st([row[0] for row in cursor]))
 
+    u_write_to_file('/Users/hero101/Documents/t_acti_lht.txt', picking_get_lht())
+    # get_lht()
+
+def picking_get_lht():
+    table_name = 'allacti'
+
+    scope_threhold = 50
+    conn = sqlite3.connect(PICKING_DB)
+    cursor = conn.cursor()
+    cursor.execute(
+        "select  code,last_wave,l_close_p,last_dif,last_duration,sideway_duration,detail_dur,detail_scope from '%s' " % (table_name,))
+
+    result = []
+    for code,last_wave,l_close_p,last_dif,last_duration,sideway_duration,detail_dur,detail_scope in cursor:
+        durs = detail_dur.split()
+        scopes = detail_scope.split()
+        if len(durs) < 2:
+            continue
+        dur1 = int(durs[1])
+        dur2 = int(durs[0])
+        scope1 = float(scopes[1])
+        scope2 = float(scopes[0])
+
+        if (scope1 > scope_threhold and dur2 < 10) or (scope2>scope_threhold and last_dif<-5):
+            result.append(code)
+
+    return result
+
+
+
 
 def jx_acti():
     table_name = 'jxacti'
     scope = WAVE_SCOPE_THRESHOLD
+    indent = 7
     # stat_activity(table_name, True, scope, '20170101', '20170630')
-    stat_activity(table_name, True, scope, '20170701', '20171231')
-    stat_activity(table_name, False, scope, '20180101', '20180630')
-    stat_activity(table_name, False, scope, '20180701', '20181231')
-    stat_activity(table_name, False, scope, '20190101', u_month_befor(0))
+    stat_activity(table_name, True, scope, u_month_befor(indent*4), u_month_befor(indent*3))
+    stat_activity(table_name, False, scope, u_month_befor(indent*3), u_month_befor(indent*2))
+    stat_activity(table_name, False, scope, u_month_befor(indent*2), u_month_befor(indent*1))
+    stat_activity(table_name, False, scope, u_month_befor(indent*1), u_month_befor(indent*0))
     analyze_activity(table_name, ACTIVITY_THRESHOLD, LIMIT_COUNT_THRESHOLD, 3)
 
 
@@ -377,12 +409,14 @@ def check_acti():
 
 def check_attention():
     overflow = 2.8
-    concepts = u_read_input('data/hot_concepts')
-    concepts_codes = Fundamental.get_codes_by_concept(concepts)
-    codes = u_read_input('data/attention.txt')
-    codes = Fundamental.name_to_codes(codes)
+    # concepts = u_read_input('data/hot_concepts')
+    # concepts_codes = Fundamental.get_codes_by_concept(concepts)
+    codes1 = u_read_input('data/attention.txt')
+    codes2 = u_read_input('data/selection.txt')
+
+    codes = Fundamental.name_to_codes(set(codes1+codes2))
     codes = Fundamental.remove_st(codes)
-    codes = [e for e in codes if e in concepts_codes]
+    # codes = [e for e in codes if e in concepts_codes]
     if codes:
         results = {}
         df = get_realtime_quotes([key for key in codes])
@@ -494,9 +528,11 @@ if __name__ == '__main__':
     #
     # stat_index([3.0, 5.0, 7.0, 9.0], '20140101', u_month_befor(0))
     # create_index_info()
-    all_acti()
-    jx_acti()
+    # picking_daily()
+    # all_acti()
+    # jx_acti()
     # calc_rps()
     # verify('600086',18,'20170101', u_month_befor(0))
     # get_picking_info('600086')
+    # get_lht()
     pass

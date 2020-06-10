@@ -1,0 +1,44 @@
+[
+    {
+        "date_created": "20190930",
+        "interest_rate": 0.00023194,
+        "initial_capital": 350000,
+        "initial_net_worth": 143297.83,
+        "capital_changed": [
+            {
+                "amount": 0,
+                "date_changed": "20190930"
+            }
+        ],
+        "name": "刘波",
+        "trading_commission": 1.5e-04
+    },
+    {
+        "date_created": "20190930",
+        "interest_rate":0.00019444,
+        "initial_capital": 2520000,
+        "initial_net_worth": 1987657.84,
+        "capital_changed": [
+            {
+                "amount": 11640,
+                "date_changed": "20200521"
+            }
+        ],
+        "name": "宋茂东",
+        "trading_commission": 1.5e-04
+    },
+    {
+        "date_created": "20200507",
+        "interest_rate":0.00019444,
+        "initial_capital": 100000,
+        "initial_net_worth": 100000,
+        "capital_changed": [
+            {
+                "amount": 0,
+                "date_changed": "20200507"
+            }
+        ],
+        "name": "宋1",
+        "trading_commission": 1.5e-04
+    }
+]

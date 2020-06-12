@@ -23,7 +23,7 @@ class Fundamental(object):
     FUNDA_DB = 'data/fundamental.db'
     WENCAI_COOKIE = 'data/wencai_cookie.txt'
     WENCAI_HOME_URL = 'http://www.iwencai.com/?allow_redirect=false'
-    DOWNLOAD_PATH = '/Users/hero101/Downloads'
+    DOWNLOAD_PATH = u_get_download_path()
     ZENJIANCHI = 'data/zenjianchi.xml'
     YUZENJIAN = 'data/yuzenjian.xml'
     JIEJINNEXT = 'data/jiejinnext.xml'
@@ -1325,9 +1325,9 @@ if __name__ == '__main__':
     # cProfile.run('Fundamental.daily_run()')
     # Fundamental.get_fundamental('300134')
     # Fundamental.create_wencai_cookie()
-    cProfile.run('Fundamental.update_fundamental()')
+    # cProfile.run('Fundamental.update_fundamental()')
     # cProfile.run('Fundamental.download_doctor()')
-    # cProfile.run('Fundamental.daily_run2()')
+    cProfile.run('Fundamental.daily_run2()')
     # Fundamental.jiejin()
     # Fundamental.update_bellwether()
     # Fundamental.download_operate()
@@ -1342,4 +1342,4 @@ if __name__ == '__main__':
     #
     #     ])
     # Fundamental.pick_by_fundamental()
-    pass
+    # pass

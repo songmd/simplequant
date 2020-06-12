@@ -226,10 +226,20 @@ def u_itchat_send_file(file, toUserName=None):
         else:
             break
 
+def u_get_download_path():
+    plat = platform.system()
+    if plat == 'Windows':
+        return 'C:/Users/songm/Downloads'
+    elif plat == 'Darwin':
+        return '/Users/hero101/Downloads'
+    elif plat == 'Linux':
+        return ''
+    return ''
+
 def u_create_path_by_system(name):
     plat = platform.system()
     if plat == 'Windows':
-        return 'C:\\Users\\songm\\Documents\\simplequant\\' + name
+        return 'C:/Users/songm/Documents/simplequant/' + name
     elif plat == 'Darwin':
         return '/Users/hero101/Documents/' + name
     elif plat == 'Linux':

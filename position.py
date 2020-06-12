@@ -859,11 +859,11 @@ class PositionMgr(object):
 
     @staticmethod
     def backup():
-        import shutil
-        import datetime
-        now = datetime.datetime.now()
-        file_path = '/Users/hero101/backups/simplequant/position_%s.db' % now.strftime('%Y%m%d%H')
-        shutil.copyfile(PositionMgr.POSMGR_DB, file_path)
+        # import shutil
+        # import datetime
+        # now = datetime.datetime.now()
+        # file_path = '/Users/hero101/backups/simplequant/position_%s.db' % now.strftime('%Y%m%d%H')
+        # shutil.copyfile(PositionMgr.POSMGR_DB, file_path)
         pass
 
     @staticmethod
@@ -921,27 +921,27 @@ class PositionMgr(object):
         # # 0909
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 2900, 30.80, '20190930')
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 3000, 31.00, '20190930')
-
+        #
         # # 0911
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 5500, 30.18, '20190930')
-
+        #
         # #0916
         # PositionMgr.trade('宋茂东', 'sell', '中贝通信', 5400, 30.701, '20190930')
-
+        #
         # #0917
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 600, 30.15, '20190930')
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 3000, 30.12, '20190930')
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 2000, 29.83, '20190930')
-
+        #
         # #0920
         # PositionMgr.trade('宋茂东', 'sell', '中贝通信', 5600, 30.45, '20190930')
-
+        #
         # #0923
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 1500, 30.02, '20190930')
-
+        #
         # #0924
         # PositionMgr.trade('宋茂东', 'sell', '中贝通信', 3500, 30.88, '20190930')
-
+        #
         # #0925
         # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 3000, 30.07, '20190930')
         #
@@ -1075,46 +1075,46 @@ class PositionMgr(object):
         # PositionMgr.trade('宋茂东', 'buy', '意华股份', 10000, 32.30, '20200506')
         # PositionMgr.trade('宋茂东', 'buy', '中富通', 10000, 21.85, '20200507')
         # PositionMgr.trade('宋茂东', 'buy', '意华股份', 10000, 33.06, '20200507')
-
+        #
         # PositionMgr.trade('宋1', 'buy', '明阳电路', 600, 19.46, '20200508')
         # PositionMgr.trade('宋1', 'buy', '金杯电工', 2000, 6.0, '20200508')
         # PositionMgr.trade('宋1', 'buy', '航发控制', 1000, 13.37, '20200508')
         # PositionMgr.trade('宋1', 'buy', '游族网络', 600, 19.71, '20200508')
         # PositionMgr.trade('宋1', 'buy', '达安基因', 500, 22.75, '20200508')
-
+        #
         # PositionMgr.trade('宋茂东', 'sell', '国电南自', 30000, 10.32, '20200508',True)
-
+        #
         # PositionMgr.trade('宋1', 'buy', '广和通', 200, 83.59, '20200511')
-
+        #
         # PositionMgr.trade('宋1', 'buy', '元隆雅图', 300, 38.02, '20200512')
         # PositionMgr.trade('宋1', 'buy', '长城证券', 1100, 12.21, '20200512')
-
+        #
         # PositionMgr.trade('宋1', 'sell', '达安基因', 500, 24.58, '20200514')
         # PositionMgr.trade('宋1', 'buy', '游族网络', 600, 20.20, '20200514')
-
+        #
         # PositionMgr.trade('宋茂东', 'sell', '精准信息', 30100, 6.13, '20200514')
-
+        #
         # PositionMgr.trade('宋茂东', 'buy', '中科信息', 8000, 22.95, '20200515')
-
+        #
         # PositionMgr.trade('宋1', '', '金杯电工', 0, 500, '20200518')
         # PositionMgr.trade('宋1', 'buy', '广和通', 0, 80, '20200519')
         # PositionMgr.trade('宋1', 'buy', '广和通', 160, 0, '20200519')
-
+        #
         # PositionMgr.trade('宋茂东', 'buy', '奥特维', 500, 23.280, '20200521')
-
+        #
         # PositionMgr.trade('宋1', '', '明阳电路', 0, 132.00, '20200528')
-
-        PositionMgr.trade('宋茂东', 'buy', '纵横通信', 0, 2440, '20200608')
-        PositionMgr.trade('宋茂东', 'buy', '纵横通信', 18300, 0, '20200608')
-        PositionMgr.trade('刘波', 'buy', '纵横通信', 0, 524, '20200608')
-        PositionMgr.trade('刘波', 'buy', '纵横通信', 3930, 0, '20200608')
-
-        PositionMgr.trade('宋1', 'sell', '游族网络', 1200, 22.10, '20200611')
-        PositionMgr.trade('宋1', 'sell', '广和通', 360, 55.13, '20200611')
-        PositionMgr.trade('宋1', 'sell', '长城证券', 1100, 12.25, '20200611')
-        PositionMgr.trade('宋1', 'buy', '游族网络', 500, 21.80, '20200612')
-        PositionMgr.trade('宋1', 'buy', '元隆雅图', 300, 36.40, '20200612')
-        PositionMgr.trade('宋1', 'sell', '元隆雅图', 300, 38.61, '20200612')
+        #
+        # PositionMgr.trade('宋茂东', 'buy', '纵横通信', 0, 2440, '20200608')
+        # PositionMgr.trade('宋茂东', 'buy', '纵横通信', 18300, 0, '20200608')
+        # PositionMgr.trade('刘波', 'buy', '纵横通信', 0, 524, '20200608')
+        # PositionMgr.trade('刘波', 'buy', '纵横通信', 3930, 0, '20200608')
+        #
+        # PositionMgr.trade('宋1', 'sell', '游族网络', 1200, 22.10, '20200611')
+        # PositionMgr.trade('宋1', 'sell', '广和通', 360, 55.13, '20200611')
+        # PositionMgr.trade('宋1', 'sell', '长城证券', 1100, 12.25, '20200611')
+        # PositionMgr.trade('宋1', 'buy', '游族网络', 500, 21.80, '20200612')
+        # PositionMgr.trade('宋1', 'buy', '元隆雅图', 300, 36.40, '20200612')
+        # PositionMgr.trade('宋1', 'sell', '元隆雅图', 300, 38.61, '20200612')
 
 
 

@@ -23,7 +23,7 @@ def daily_run():
     Fundamental.daily_run()
     PositionMgr.daily_run()
     daily_synthesis()
-    daily_stat_rtm()
+    # daily_stat_rtm()
     pass
 
 

@@ -230,7 +230,7 @@ def u_create_path_by_system(name):
     plat = platform.system()
     if plat == 'Windows':
         return 'C:\\Users\\songm\\Documents\\simplequant\\' + name
-    elif plat == 'Macosx':
+    elif plat == 'Darwin':
         return '/Users/hero101/Documents/' + name
     elif plat == 'Linux':
         return name

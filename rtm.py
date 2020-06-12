@@ -76,27 +76,27 @@ def rtm(debug=False):
 
         result = check_attention()
         if result:
-            synthesis('/Users/hero101/Documents/t_attention_check.txt')
+            synthesis(u_create_path_by_system('t_attention_check.txt'))
         notify_fu('attention', result, already_notify)
 
         result = dh_check_macd()
         if result:
-            synthesis('/Users/hero101/Documents/t_macd_check.txt')
+            synthesis(u_create_path_by_system('t_macd_check.txt'))
         notify_fu('macd', result, already_notify)
 
         result = check_acti()
         if result:
-            synthesis('/Users/hero101/Documents/t_acti_check.txt')
+            synthesis(u_create_path_by_system('t_acti_check.txt'))
         notify_fu('acti', result, already_notify)
 
         result = Fundamental.check_doctor()
         if result:
-            synthesis('/Users/hero101/Documents/t_doctor_check.txt')
+            synthesis(u_create_path_by_system('t_doctor_check.txt'))
         notify_fu('doctor', result, already_notify)
 
         result = Fundamental.check_yuzen()
         if result:
-            synthesis('/Users/hero101/Documents/t_yuzen_check.txt')
+            synthesis(u_create_path_by_system('t_yuzen_check.txt'))
         notify_fu('yuzen', result, already_notify)
 
         now = datetime.datetime.now()
@@ -107,8 +107,8 @@ def rtm(debug=False):
             time.sleep(5)
         continue
 
-    u_write_to_file('/Users/hero101/Documents/t_notified.txt', already_notify)
-    synthesis('/Users/hero101/Documents/t_notified.txt')
+    u_write_to_file(u_create_path_by_system('t_notified.txt'), already_notify)
+    synthesis(u_create_path_by_system('t_notified.txt'))
     # u_itchat_send_file('data/dgn/dgn_t_notified.txt', toUserName=target_group)
     daily_stat_rtm()
 
@@ -163,7 +163,7 @@ def stat_rtm(days):
     with open('data/reports/rtm_%s.txt' % (days), 'w') as wfile:
         wfile.write(info)
 
-    u_write_to_file('/Users/hero101/Documents/t_notified_%s.txt' % days, codes)
+    u_write_to_file(u_create_path_by_system('t_notified_%s.txt') % days, codes)
     # synthesis('/Users/hero101/Documents/t_notified_%s.txt' % days)
     pass
 

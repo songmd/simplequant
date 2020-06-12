@@ -334,39 +334,39 @@ class Fundamental(object):
         cursor = conn.cursor()
         cursor.execute(
             "select distinct code from '%s' where type='扭亏' order by pct desc " % Fundamental.YUZJ_TB)
-        u_write_to_file('/Users/hero101/Documents/t_niukui.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_niukui.txt'), [row[0] for row in cursor])
 
         cursor.execute(
             "select distinct code from '%s' where type like '%%亏%%' and pct < 0 order by pct desc " % Fundamental.YUZJ_TB)
-        u_write_to_file('/Users/hero101/Documents/t_kuisun.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_kuisun.txt'), [row[0] for row in cursor])
 
         cursor.execute(
             "select distinct code from '%s' where type='大幅上升' order by pct desc " % Fundamental.YUZJ_TB)
-        u_write_to_file('/Users/hero101/Documents/t_dfss.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_dfss.txt'), [row[0] for row in cursor])
 
         cursor.execute(
             "select distinct code from '%s' where type='预增' order by pct desc " % Fundamental.YUZJ_TB)
-        u_write_to_file('/Users/hero101/Documents/t_yuzen.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_yuzen.txt'), [row[0] for row in cursor])
 
         cursor.execute("select distinct code from '%s' where type='预降' order by pct" % Fundamental.YUZJ_TB)
-        u_write_to_file('/Users/hero101/Documents/t_yujian.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_yujian.txt'), [row[0] for row in cursor])
 
         cursor.execute("select distinct code from '%s' where type='大幅下降' order by pct" % Fundamental.YUZJ_TB)
-        u_write_to_file('/Users/hero101/Documents/t_dfxj.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_dfxj.txt'), [row[0] for row in cursor])
 
         cursor.execute(
             "select distinct code from '%s' where dir = '减持' and prg == '进行中' and pct > 0.1 and e_dt > '%s' and f_dt > '%s'" % (
                 Fundamental.ZENJC_TB,
                 u_month_befor(0),
                 u_month_befor(6)))
-        u_write_to_file('/Users/hero101/Documents/t_jianchi.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_jianchi.txt'), [row[0] for row in cursor])
 
         cursor.execute(
             "select distinct code from '%s' where dir = '增持' and prg == '进行中' and e_dt > '%s' and f_dt > '%s'" % (
                 Fundamental.ZENJC_TB,
                 u_month_befor(0),
                 u_month_befor(6)))
-        u_write_to_file('/Users/hero101/Documents/t_zenchi.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_zenchi.txt'), [row[0] for row in cursor])
 
     @staticmethod
     def _download_finance_process(dbname, stocks):
@@ -751,7 +751,7 @@ class Fundamental(object):
         cursor.execute(sql)
         codes = [row[0] for row in cursor]
         u_write_to_file('data/pick_concepts.txt', codes)
-        u_write_to_file('/Users/hero101/Documents/t_pick_concepts.txt', codes)
+        u_write_to_file(u_create_path_by_system('t_pick_concepts.txt') , codes)
         synthesis('data/pick_concepts.txt')
         # return [row[0] for row in cursor]
 
@@ -808,8 +808,8 @@ class Fundamental(object):
             allbw |= set(bellwether[c])
             if c in hot_concepts:
                 hotbw |= set(bellwether[c])
-        u_write_to_file('/Users/hero101/Documents/t_bw_all.txt', Fundamental.name_to_codes(allbw))
-        u_write_to_file('/Users/hero101/Documents/t_bw_hot.txt', Fundamental.name_to_codes(hotbw))
+        u_write_to_file(u_create_path_by_system('t_bw_all.txt'), Fundamental.name_to_codes(allbw))
+        u_write_to_file(u_create_path_by_system('t_bw_hot.txt'), Fundamental.name_to_codes(hotbw))
         pass
 
     @staticmethod
@@ -902,8 +902,8 @@ class Fundamental(object):
             allbw |= set(bellwether[c])
             if c in hot_concepts:
                 hotbw |= set(bellwether[c])
-        u_write_to_file('/Users/hero101/Documents/t_bw_all.txt', Fundamental.name_to_codes(allbw))
-        u_write_to_file('/Users/hero101/Documents/t_bw_hot.txt', Fundamental.name_to_codes(hotbw))
+        u_write_to_file(u_create_path_by_system('t_bw_all.txt'), Fundamental.name_to_codes(allbw))
+        u_write_to_file(u_create_path_by_system('t_bw_hot.txt'), Fundamental.name_to_codes(hotbw))
 
         # u_write_to_file('/Users/hero101/Documents/t_bellwether.txt',
         #                 ['%s:%s' % (k, ','.join(bellwether[k])) for k in bellwether])
@@ -1075,7 +1075,7 @@ class Fundamental(object):
                 result.append(code)
 
         # from synthesis import synthesis
-        u_write_to_file('/Users/hero101/Documents/t_fina_good.txt',result)
+        u_write_to_file(u_create_path_by_system('t_fina_good.txt'),result)
         # synthesis('/Users/hero101/Documents/t_fina_good.txt')
         return result
         pass
@@ -1251,7 +1251,7 @@ class Fundamental(object):
             cursor.execute("drop table if exists '%s'" % table)
             pass
         Fundamental.download_doctor()
-        u_write_to_file('/Users/hero101/Documents/t_doctor_all.txt', Fundamental.select_doctor_codes())
+        u_write_to_file(u_create_path_by_system('t_doctor_all.txt'), Fundamental.select_doctor_codes())
         cursor.execute("create table if not exists doc_hist as select * from %s where 1=0" % Fundamental.DOCTOR_TB)
         cursor.execute("delete from doc_hist where date='%s'" % u_day_befor(0))
         conn.commit()
@@ -1275,7 +1275,7 @@ class Fundamental(object):
                 rcp = round((price / pre_close - 1) * 100, 2)
                 if rcp > overflow:
                     results[code] = price
-            u_write_to_file('/Users/hero101/Documents/t_doctor_check.txt', results)
+            u_write_to_file(u_create_path_by_system('t_doctor_check.txt'), results)
             return results
         return {}
 
@@ -1297,7 +1297,7 @@ class Fundamental(object):
                     rcp = round((price / pre_close - 1) * 100, 2)
                     if rcp > overflow:
                         results[code] = price
-            u_write_to_file('/Users/hero101/Documents/t_yuzen_check.txt', results)
+            u_write_to_file(u_create_path_by_system('t_yuzen_check.txt'), results)
             return results
         return {}
 
@@ -1324,8 +1324,8 @@ if __name__ == '__main__':
     # Fundamental.download_concept()
     # cProfile.run('Fundamental.daily_run()')
     # Fundamental.get_fundamental('300134')
-    # Fundamental.create_wencai_cookie()
-    cProfile.run('Fundamental.update_fundamental()')
+    Fundamental.create_wencai_cookie()
+    # cProfile.run('Fundamental.update_fundamental()')
     # cProfile.run('Fundamental.download_doctor()')
     # cProfile.run('Fundamental.daily_run2()')
     # Fundamental.jiejin()

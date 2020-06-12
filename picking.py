@@ -244,7 +244,7 @@ def analyze_activity(table_name, activity, avg_limit, count_limit):
         if select and count > count_limit:
             result.append(code)
     result = Fundamental.remove_st(result)
-    u_write_to_file('/Users/hero101/Documents/t_acti_jx.txt', result)
+    u_write_to_file(u_create_path_by_system('t_acti_jx.txt'), result)
 
 
 def calc_rps():
@@ -327,13 +327,13 @@ def all_acti():
         "select distinct code from '%s' where activity < %s and waves > %s and avg_limit > %s order by activity" % (
             table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD, LIMIT_COUNT_THRESHOLD))
 
-    u_write_to_file('/Users/hero101/Documents/t_acti_all.txt', Fundamental.remove_st([row[0] for row in cursor]))
+    u_write_to_file(u_create_path_by_system('t_acti_all.txt'), Fundamental.remove_st([row[0] for row in cursor]))
     cursor.execute(
         "select distinct code from '%s' where l_close_p > 1 and last_wave < 0 and activity < %s and waves > %s and avg_limit > %s and last_dif < 10 order by activity" % (
             table_name, ACTIVITY_THRESHOLD, WAVE_COUNT_THRESHOLD, LIMIT_COUNT_THRESHOLD))
-    u_write_to_file('/Users/hero101/Documents/t_acti_today.txt', Fundamental.remove_st([row[0] for row in cursor]))
+    u_write_to_file(u_create_path_by_system('t_acti_today.txt'), Fundamental.remove_st([row[0] for row in cursor]))
 
-    u_write_to_file('/Users/hero101/Documents/t_acti_lht.txt', picking_get_lht())
+    u_write_to_file(u_create_path_by_system('t_acti_lht.txt'), picking_get_lht())
     # get_lht()
 
 def picking_get_lht():
@@ -402,7 +402,7 @@ def check_acti():
             rcp = round((price / pre_close - 1) * 100, 2)
             if rcp > overflow:
                 results[code] = price
-        u_write_to_file('/Users/hero101/Documents/t_acti_check.txt', results)
+        u_write_to_file(u_create_path_by_system('t_acti_check.txt'), results)
         return results
     return {}
 
@@ -427,7 +427,7 @@ def check_attention():
             rcp = round((price / pre_close - 1) * 100, 2)
             if rcp > overflow:
                 results[code] = price
-        u_write_to_file('/Users/hero101/Documents/t_attention_check.txt', results)
+        u_write_to_file(u_create_path_by_system('t_attention_check.txt'), results)
         return results
     return {}
 

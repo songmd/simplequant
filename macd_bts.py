@@ -58,12 +58,12 @@ def find_macd_target():
     # run_backtest(strategy, '603106', begin_date, end_date)
     # run_backtest(strategy, 'macd_target.txt', begin_date, end_date)
     run_backtest(strategy, '', begin_date, end_date)
-    analyze_backtest_by_code(strategy.result_table(), u_month_befor(12), end_date, '/Users/hero101/Documents/t_macd_all.txt')
+    analyze_backtest_by_code(strategy.result_table(), u_month_befor(12), end_date, u_create_path_by_system('t_macd_all.txt'))
     # win_time >= 8 and win_rate > 50 and rt_rate > 0
 
     # analyze_backtest_by_time(strategy.result_table(), begin_date, end_date, 7)
     # analyze_backtest_by_time(strategy.result_table(), begin_date, end_date, 30)
-    analyze_backtest_by_code_time(strategy.result_table(), begin_date, end_date, 120, '/Users/hero101/Documents/t_macd_jx.txt')
+    analyze_backtest_by_code_time(strategy.result_table(), begin_date, end_date, 120, u_create_path_by_system('t_macd_jx.txt'))
     # analyze_backtest_by_time(strategy.result_table(), begin_date, end_date, 90)
     # analyze_backtest_by_time(strategy.result_table(), begin_date, end_date, 250)
 

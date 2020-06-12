@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import platform
 import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -225,6 +226,15 @@ def u_itchat_send_file(file, toUserName=None):
         else:
             break
 
+def u_create_path_by_system(name):
+    plat = platform.system()
+    if plat == 'Windows':
+        return 'C:\\Users\\songm\\Documents\\simplequant\\' + name
+    elif plat == 'Macosx':
+        return '/Users/hero101/Documents/' + name
+    elif plat == 'Linux':
+        return name
+    return name
 
 if __name__ == '__main__':
     #   import cProfile
@@ -232,5 +242,7 @@ if __name__ == '__main__':
     # cProfile.run('profile_run2()')
     # u_read_input()
     # print(u_days_diff('20200416','20200416'))
-    print(u_file_intersection(['data/input.txt', 'data/attention.txt']))
+    # print(u_file_intersection(['data/input.txt', 'data/attention.txt']))
+    print(platform.system())
+    print(u_create_path_by_system('temp.txt'))
     pass

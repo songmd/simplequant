@@ -717,7 +717,7 @@ class DataHandler(object):
         result.sort(key=lambda s: s[1], reverse=True)
 
         u_write_to_file('data/monster_%s_%s.txt' % (limit, month), [e[0] for e in result])
-        u_write_to_file('/Users/hero101/Documents/t_monster_%s_%s.txt' % (limit, month), [e[0] for e in result])
+        u_write_to_file(u_create_path_by_system('t_monster_%s_%s.txt') % (limit, month), [e[0] for e in result])
         synthesis('data/monster_%s_%s.txt' % (limit, month))
         return result
 
@@ -908,10 +908,10 @@ class DataHandler(object):
     def create_attention_ex():
         day_count = 1
         attention_tables = {
-            'macd_al': '/Users/hero101/Documents/t_macd_all.txt',
-            'macd_jx': '/Users/hero101/Documents/t_macd_jx.txt',
-            'acti_al': '/Users/hero101/Documents/t_acti_all.txt',
-            'acti_jx': '/Users/hero101/Documents/t_acti_jx.txt'
+            'macd_al': u_create_path_by_system('t_macd_all.txt'),
+            'macd_jx': u_create_path_by_system('t_macd_jx.txt'),
+            'acti_al': u_create_path_by_system('t_acti_all.txt'),
+            'acti_jx': u_create_path_by_system('t_acti_jx.txt')
         }
 
         conn = sqlite3.connect(DataHandler.COOKECD_DB)
@@ -1048,8 +1048,8 @@ class DataHandler(object):
         cursor.execute(
             "SELECT DISTINCT trade_date FROM main.daily  order by trade_date desc limit 1")
         days = [r[0] for r in cursor]
-        codes1 = u_read_input('/Users/hero101/Documents/t_macd_all.txt')
-        codes2 = u_read_input('/Users/hero101/Documents/t_macd_jx.txt')
+        codes1 = u_read_input(u_create_path_by_system('t_macd_all.txt'))
+        codes2 = u_read_input(u_create_path_by_system('t_macd_jx.txt'))
         sql = "select code,ljt,d1t from daily where code in (%s) and trade_date in (%s) and trend < 0 and ljt < 9.0 and d1t<9.0" % (
             u_format_list([e for e in concept_codes if (e in codes1 or e in codes2)]), u_format_list(days))
         cursor.execute(sql)
@@ -1070,16 +1070,15 @@ class DataHandler(object):
                     if rcp > targets[code][0] + overflow:
                         results[code] = price
 
-        u_write_to_file('/Users/hero101/Documents/t_macd_check.txt', results)
+        u_write_to_file(u_create_path_by_system('t_macd_check.txt'), results)
         return results
 
     @staticmethod
     def select_today_macd():
         targets = {
-            'macd_al': '/Users/hero101/Documents/t_macd_all.txt',
-            'macd_jx': '/Users/hero101/Documents/t_macd_jx.txt'
+            'macd_al': u_create_path_by_system('t_macd_all.txt'),
+            'macd_jx': u_create_path_by_system('t_macd_jx.txt')
         }
-
         from fundamental import Fundamental
         concepts = u_read_input('data/hot_concepts')
         concept_codes = Fundamental.get_codes_by_concept(concepts)
@@ -1102,7 +1101,7 @@ class DataHandler(object):
 
         result = [e for e in result if e in concept_codes]
 
-        u_write_to_file('/Users/hero101/Documents/t_macd_today.txt', result)
+        u_write_to_file(u_create_path_by_system('t_macd_today.txt'), result)
         pass
 
     @staticmethod
@@ -1181,7 +1180,7 @@ boll线： %s    收盘价距上轨 %s%%   中轨 %s%%    下轨 %s%%
         cursor.execute(
             "SELECT code FROM today where list_date < '%s' and close_r >= 8.0 order by close_r desc " % (
                 u_day_befor(6),))
-        u_write_to_file('/Users/hero101/Documents/t_ss_today.txt', [row[0] for row in cursor])
+        u_write_to_file(u_create_path_by_system('t_ss_today.txt'), [row[0] for row in cursor])
         pass
 
     @staticmethod

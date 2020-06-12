@@ -160,7 +160,7 @@ def stat_rtm(days):
     
 %s
 ''' % ('\n'.join(stat_detail), '\n'.join(code_details))
-    with open('data/reports/rtm_%s.txt' % (days), 'w') as wfile:
+    with open('data/reports/rtm_%s.txt' % (days), 'w',encoding='utf-8') as wfile:
         wfile.write(info)
 
     u_write_to_file(u_create_path_by_system('t_notified_%s.txt') % days, codes)

@@ -175,7 +175,7 @@ def u_half_year_contain(day):
 
 
 def u_read_input(file_name='input.txt'):
-    with open(file_name) as input:
+    with open(file_name,encoding='utf-8') as input:
         lines = []
         while True:
             line = input.readline()
@@ -189,7 +189,7 @@ def u_read_input(file_name='input.txt'):
 
 
 def u_write_to_file(file_name, ds):
-    with open(file_name, 'w') as wfile:
+    with open(file_name, 'w',encoding='utf-8') as wfile:
         for e in ds:
             wfile.writelines(str(e) + '\n')
 
@@ -205,7 +205,7 @@ def u_file_intersection(files):
 
 def u_write_to_file_append(file_name, ds):
     exist_lines = u_read_input(file_name)
-    with open(file_name, 'a') as wfile:
+    with open(file_name, 'a',encoding='utf-8') as wfile:
         for e in ds:
             if e not in exist_lines:
                 wfile.writelines('\n' + str(e))

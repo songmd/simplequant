@@ -441,7 +441,7 @@ def picking_daily():
 
 
 def create_index_info():
-    with open('data/index_info.txt', 'w') as wfile:
+    with open('data/index_info.txt', 'w',encoding='utf-8') as wfile:
         names = ['上证综指',
                  '深证成指',
                  '创业板指',

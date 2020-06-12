@@ -23,7 +23,7 @@ def synthesis(input, dir=''):
     #         no += 1
     #     else:
     #         break
-    with open(file_path, 'w') as wfile:
+    with open(file_path, 'w',encoding='utf-8') as wfile:
         codes = u_read_input(input)
         codes = Fundamental.name_to_codes(codes)
         for code in codes:

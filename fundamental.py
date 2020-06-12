@@ -73,7 +73,7 @@ class Fundamental(object):
         cookie = {}
         for i in driver.get_cookies():
             cookie[i["name"]] = i["value"]
-        with open(Fundamental.WENCAI_COOKIE, "w") as f:
+        with open(Fundamental.WENCAI_COOKIE, "w",encoding='utf-8') as f:
             f.write(json.dumps(cookie))
 
     @staticmethod
@@ -106,7 +106,7 @@ class Fundamental(object):
             },
 
         ]
-        with open(Fundamental.WENCAI_COOKIE) as f:
+        with open(Fundamental.WENCAI_COOKIE,encoding='utf-8') as f:
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
             from selenium import webdriver
@@ -147,7 +147,7 @@ class Fundamental(object):
                 cookie_update = {}
                 for i in driver.get_cookies():
                     cookie_update[i["name"]] = i["value"]
-                with open(Fundamental.WENCAI_COOKIE, "w") as f:
+                with open(Fundamental.WENCAI_COOKIE, "w",encoding='utf-8') as f:
                     f.write(json.dumps(cookie_update))
 
                 driver.close()
@@ -213,7 +213,7 @@ class Fundamental(object):
 
         def _jiejin_fu(file):
             # Fundamental.JIEJINPRE
-            with open(file) as f:
+            with open(file,encoding='utf-8') as f:
                 table_name = Fundamental.JIEJIN_TB
                 conn = sqlite3.connect(Fundamental.FUNDA_DB)
                 cursor = conn.cursor()
@@ -242,7 +242,7 @@ class Fundamental(object):
     @staticmethod
     #   业绩预告处理
     def yuzenjian():
-        with open(Fundamental.YUZENJIAN) as f:
+        with open(Fundamental.YUZENJIAN,encoding='utf-8') as f:
             table_name = Fundamental.YUZJ_TB
             root = lxml.etree.HTML(f.read())
             items = root.xpath('//tr')
@@ -284,7 +284,7 @@ class Fundamental(object):
     #  增减持统计
     def zenjianchi():
         table_name = Fundamental.ZENJC_TB
-        with open(Fundamental.ZENJIANCHI) as f:
+        with open(Fundamental.ZENJIANCHI,encoding='utf-8') as f:
             conn = sqlite3.connect(Fundamental.FUNDA_DB)
             cursor = conn.cursor()
             cursor.execute("drop table if exists '%s'" % table_name)
@@ -1324,8 +1324,8 @@ if __name__ == '__main__':
     # Fundamental.download_concept()
     # cProfile.run('Fundamental.daily_run()')
     # Fundamental.get_fundamental('300134')
-    Fundamental.create_wencai_cookie()
-    # cProfile.run('Fundamental.update_fundamental()')
+    # Fundamental.create_wencai_cookie()
+    cProfile.run('Fundamental.update_fundamental()')
     # cProfile.run('Fundamental.download_doctor()')
     # cProfile.run('Fundamental.daily_run2()')
     # Fundamental.jiejin()

@@ -17,7 +17,7 @@ class PositionMgr(object):
 
     @staticmethod
     def get_account(name):
-        with open(PositionMgr.ACCOUNT_INFO) as f:
+        with open(PositionMgr.ACCOUNT_INFO,encoding='utf-8') as f:
             accounts = json.load(f)
             # text = json.dumps(accounts, ensure_ascii=False, sort_keys=True, indent=4)
             # with open(PositionMgr.ACCOUNT_INFO, "w") as f:
@@ -33,7 +33,7 @@ class PositionMgr(object):
     def update_trading_record():
         PositionMgr.backup()
 
-        with open(PositionMgr.TRADING_RECORD) as f:
+        with open(PositionMgr.TRADING_RECORD,encoding='utf-8') as f:
             trading_records = json.load(f)
             conn = sqlite3.connect(PositionMgr.POSMGR_DB)
             cursor = conn.cursor()
@@ -464,7 +464,7 @@ class PositionMgr(object):
             name, base_rec[1], end_rec[1], dif_ntcp, rr, '\n'.join(base_inds_info), avg_mv, avg_pr,
             dif_tcost, dif_itrst, dif_opc, dif_prfc, dif_prfa, dif_lsc, dif_lsa
         )
-        with open('data/reports/%s_%s.txt' % (name, report_file_ext), 'w') as wfile:
+        with open('data/reports/%s_%s.txt' % (name, report_file_ext), 'w',encoding='utf-8') as wfile:
             wfile.write(info)
         pass
 
@@ -619,7 +619,7 @@ class PositionMgr(object):
             net_worth, market_value, cash, debt, interest, position_rate,
             '\n'.join(pos_infos),
         )
-        with open('data/reports/%s_realtime.txt' % (name,), 'w') as wfile:
+        with open('data/reports/%s_realtime.txt' % (name,), 'w',encoding='utf-8') as wfile:
             wfile.write(info)
         pass
 
@@ -714,7 +714,7 @@ class PositionMgr(object):
             ntcp, tmv, cash, debt, interest, tpr,
             '\n'.join(pos_infos),
         )
-        with open('data/reports/%s_today.txt' % (name,), 'w') as wfile:
+        with open('data/reports/%s_today.txt' % (name,), 'w',encoding='utf-8') as wfile:
             wfile.write(info)
         pass
 
@@ -1103,6 +1103,20 @@ class PositionMgr(object):
         # PositionMgr.trade('宋茂东', 'buy', '奥特维', 500, 23.280, '20200521')
 
         # PositionMgr.trade('宋1', '', '明阳电路', 0, 132.00, '20200528')
+
+        PositionMgr.trade('宋茂东', 'buy', '纵横通信', 0, 2440, '20200608')
+        PositionMgr.trade('宋茂东', 'buy', '纵横通信', 18300, 0, '20200608')
+        PositionMgr.trade('刘波', 'buy', '纵横通信', 0, 524, '20200608')
+        PositionMgr.trade('刘波', 'buy', '纵横通信', 3930, 0, '20200608')
+
+        PositionMgr.trade('宋1', 'sell', '游族网络', 1200, 22.10, '20200611')
+        PositionMgr.trade('宋1', 'sell', '广和通', 360, 55.13, '20200611')
+        PositionMgr.trade('宋1', 'sell', '长城证券', 1100, 12.25, '20200611')
+        PositionMgr.trade('宋1', 'buy', '游族网络', 500, 21.80, '20200612')
+        PositionMgr.trade('宋1', 'buy', '元隆雅图', 300, 36.40, '20200612')
+        PositionMgr.trade('宋1', 'sell', '元隆雅图', 300, 38.61, '20200612')
+
+
 
     @staticmethod
     def export_position():

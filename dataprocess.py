@@ -1385,5 +1385,5 @@ if __name__ == '__main__':
     # monster = DataHandler.get_monster(80, 12)
     # print(monster)
     # dh_get_monster()
-    DataHandler.select_today_macd()
+    # DataHandler.select_today_macd()
     pass

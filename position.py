@@ -17,7 +17,7 @@ class PositionMgr(object):
 
     @staticmethod
     def get_account(name):
-        with open(PositionMgr.ACCOUNT_INFO,encoding='utf-8') as f:
+        with open(PositionMgr.ACCOUNT_INFO, encoding='utf-8') as f:
             accounts = json.load(f)
             # text = json.dumps(accounts, ensure_ascii=False, sort_keys=True, indent=4)
             # with open(PositionMgr.ACCOUNT_INFO, "w") as f:
@@ -33,7 +33,7 @@ class PositionMgr(object):
     def update_trading_record():
         PositionMgr.backup()
 
-        with open(PositionMgr.TRADING_RECORD,encoding='utf-8') as f:
+        with open(PositionMgr.TRADING_RECORD, encoding='utf-8') as f:
             trading_records = json.load(f)
             conn = sqlite3.connect(PositionMgr.POSMGR_DB)
             cursor = conn.cursor()
@@ -316,7 +316,7 @@ class PositionMgr(object):
         return net_worth, cash, debt, market_value, return_rate, position_rate, trading_cost, interest, oper_count
 
     @staticmethod
-    def stat_position(name,drop = False):
+    def stat_position(name, drop=False):
 
         account = PositionMgr.get_account(name)
         records = PositionMgr.get_trading_record(name)
@@ -371,10 +371,81 @@ class PositionMgr(object):
         conn.commit()
 
     @staticmethod
+    def position_overview(name, indent):
+        conn = sqlite3.connect(PositionMgr.POSMGR_DB)
+        cursor = conn.cursor()
+        table_name = PositionMgr.TRDSTAT_TB
+        cursor.execute("select tdate from '%s' where name = '%s' order by tdate" % (table_name, name))
+        all_dates = [row[0] for row in cursor]
+        if len(all_dates) < 2:
+            return
+
+        def is_same(d1, d2, indent):
+            if indent == 'w':
+                return u_same_week(d1, d2)
+            elif indent == 'm':
+                return u_same_month(d1, d2)
+            elif indent == 'y':
+                return u_same_year(d1, d2)
+            return d1 == d2
+
+        report_dates = []
+        report_dates.append(all_dates[0])
+        for i in range(1, len(all_dates)):
+            if is_same(report_dates[-1], all_dates[i], indent) and len(report_dates) > 1:
+                report_dates.pop()
+            report_dates.append(all_dates[i])
+
+        cursor.execute("select * from '%s' where name='%s' and tdate in (%s) order by tdate desc" % (
+            table_name, name, ','.join(["'%s'" % e for e in report_dates])))
+        recs = [row for row in cursor]
+        report_lines = []
+        for i in range(len(recs) - 1):
+            end_rec = recs[i]
+            base_rec = recs[i + 1]
+
+            # 净值变化
+            dif_ntcp = round(end_rec[2] - base_rec[2], 2)
+            # 收益率
+            rr = round((end_rec[2] / base_rec[2] - 1) * 100, 2)
+            # 指数基准收益率
+            base_inds = DataHandler.get_index_base(base_rec[1], end_rec[1])
+            base_inds_str = ['%5s%%' % (base_inds[k],) for k in base_inds]
+            # 交易成本
+            dif_tcost = round(end_rec[8] - base_rec[8], 2)
+            # 融资利息
+            dif_itrst = round(end_rec[9] - base_rec[9], 2)
+            # 操作次数
+            dif_opc = end_rec[10] - base_rec[10]
+            # 盈利次数
+            dif_prfc = end_rec[11] - base_rec[11]
+            # 盈利总额
+            dif_prfa = round(end_rec[12] - base_rec[12], 2)
+            # 亏损次数
+            dif_lsc = end_rec[13] - base_rec[13]
+            # 亏损总额
+            dif_lsa = round(end_rec[14] - base_rec[14], 2)
+            report_lines.append('%s-%-8s %12s 元 %8s%% %10s 元 %10s 元  %4s %8s %12s 元 %6s %12s 元      %s' % (
+                base_rec[1], end_rec[1], dif_ntcp, rr, dif_tcost, dif_itrst, dif_opc, dif_prfc, dif_prfa, dif_lsc,
+                dif_lsa
+                , ' '.join(base_inds_str)))
+            # {'dif_ntcp': dif_ntcp, 'rr': rr, 'base_inds': base_inds, 'dif_tcost': dif_tcost, 'dif_itrst': dif_itrst,
+            #  'dif_opc': dif_opc, 'dif_prfc': dif_prfc, 'dif_prfa': dif_prfa, 'dif_lsc': dif_lsc,
+            #  'dif_lsa': dif_lsa})
+            # return report_lines
+        info = '''账户:   %s 
+日期                    净值变化      账户收益率      交易成本     融资利息   操作次数   盈利次数     盈利总额     亏损次数   亏损总额         基准(上,深,创,中小,沪深300,上50,上180,上380,深300,中小300,中100,中200,中500,上中)  
+%s''' % (
+            name, '\r\n'.join(report_lines)
+        )
+        with open('data/reports/%s_ov_%s.txt' % (name, indent), 'w', encoding='utf-8') as wfile:
+            wfile.write(info)
+
+    @staticmethod
     def report_position(name, begin_date, end_date, report_file_ext):
         ac = PositionMgr.get_account(name)
         date_created = ac['date_created']
-        if begin_date< date_created:
+        if begin_date < date_created:
             begin_date = date_created
 
         conn = sqlite3.connect(PositionMgr.POSMGR_DB)
@@ -464,7 +535,7 @@ class PositionMgr(object):
             name, base_rec[1], end_rec[1], dif_ntcp, rr, '\n'.join(base_inds_info), avg_mv, avg_pr,
             dif_tcost, dif_itrst, dif_opc, dif_prfc, dif_prfa, dif_lsc, dif_lsa
         )
-        with open('data/reports/%s_%s.txt' % (name, report_file_ext), 'w',encoding='utf-8') as wfile:
+        with open('data/reports/%s_%s.txt' % (name, report_file_ext), 'w', encoding='utf-8') as wfile:
             wfile.write(info)
         pass
 
@@ -619,7 +690,7 @@ class PositionMgr(object):
             net_worth, market_value, cash, debt, interest, position_rate,
             '\n'.join(pos_infos),
         )
-        with open('data/reports/%s_realtime.txt' % (name,), 'w',encoding='utf-8') as wfile:
+        with open('data/reports/%s_realtime.txt' % (name,), 'w', encoding='utf-8') as wfile:
             wfile.write(info)
         pass
 
@@ -714,7 +785,7 @@ class PositionMgr(object):
             ntcp, tmv, cash, debt, interest, tpr,
             '\n'.join(pos_infos),
         )
-        with open('data/reports/%s_today.txt' % (name,), 'w',encoding='utf-8') as wfile:
+        with open('data/reports/%s_today.txt' % (name,), 'w', encoding='utf-8') as wfile:
             wfile.write(info)
         pass
 
@@ -830,7 +901,7 @@ class PositionMgr(object):
 
     @staticmethod
     def daily_run():
-        PositionMgr.stat_position('刘波',True)
+        PositionMgr.stat_position('刘波', True)
         PositionMgr.stat_position('宋茂东')
         PositionMgr.stat_position('宋1')
 
@@ -840,22 +911,38 @@ class PositionMgr(object):
 
         PositionMgr.export_position()
 
-        PositionMgr.report_position('刘波', u_day_befor(0), u_day_befor(0), 'd')
-        PositionMgr.report_position('宋茂东', u_day_befor(0), u_day_befor(0), 'd')
-        PositionMgr.report_position('宋1', u_day_befor(0), u_day_befor(0), 'd')
 
-        PositionMgr.report_position('刘波', u_week_begin(), u_day_befor(0), 'w')
-        PositionMgr.report_position('宋茂东', u_week_begin(), u_day_befor(0), 'w')
-        PositionMgr.report_position('宋1', u_week_begin(), u_day_befor(0), 'w')
+        # PositionMgr.report_position('刘波', u_day_befor(0), u_day_befor(0), 'd')
+        # PositionMgr.report_position('宋茂东', u_day_befor(0), u_day_befor(0), 'd')
+        # PositionMgr.report_position('宋1', u_day_befor(0), u_day_befor(0), 'd')
+        #
+        # PositionMgr.report_position('刘波', u_week_begin(), u_day_befor(0), 'w')
+        # PositionMgr.report_position('宋茂东', u_week_begin(), u_day_befor(0), 'w')
+        # PositionMgr.report_position('宋1', u_week_begin(), u_day_befor(0), 'w')
+        #
+        # PositionMgr.report_position('刘波', u_month_begin(), u_day_befor(0), 'm')
+        # PositionMgr.report_position('宋茂东', u_month_begin(), u_day_befor(0), 'm')
+        # PositionMgr.report_position('宋1', u_month_begin(), u_day_befor(0), 'm')
+        #
+        # PositionMgr.report_position('刘波', u_year_begin(), u_day_befor(0), 'y')
+        # PositionMgr.report_position('宋茂东', u_year_begin(), u_day_befor(0), 'y')
+        # PositionMgr.report_position('宋1', u_year_begin(), u_day_befor(0), 'y')
 
-        PositionMgr.report_position('刘波', u_month_begin(), u_day_befor(0), 'm')
-        PositionMgr.report_position('宋茂东', u_month_begin(), u_day_befor(0), 'm')
-        PositionMgr.report_position('宋1', u_month_begin(), u_day_befor(0), 'm')
+        PositionMgr.position_overview('刘波',  'd')
+        PositionMgr.position_overview('宋茂东',  'd')
+        PositionMgr.position_overview('宋1',  'd')
 
-        PositionMgr.report_position('刘波', u_year_begin(), u_day_befor(0), 'y')
-        PositionMgr.report_position('宋茂东', u_year_begin(), u_day_befor(0), 'y')
-        PositionMgr.report_position('宋1', u_year_begin(), u_day_befor(0), 'y')
-        pass
+        PositionMgr.position_overview('刘波','w')
+        PositionMgr.position_overview('宋茂东', 'w')
+        PositionMgr.position_overview('宋1', 'w')
+
+        PositionMgr.position_overview('刘波', 'm')
+        PositionMgr.position_overview('宋茂东', 'm')
+        PositionMgr.position_overview('宋1',  'm')
+
+        PositionMgr.position_overview('刘波',  'y')
+        PositionMgr.position_overview('宋茂东', 'y')
+        PositionMgr.position_overview('宋1', 'y')
 
     @staticmethod
     def backup():
@@ -1116,8 +1203,6 @@ class PositionMgr(object):
         # PositionMgr.trade('宋1', 'buy', '元隆雅图', 300, 36.40, '20200612')
         # PositionMgr.trade('宋1', 'sell', '元隆雅图', 300, 38.61, '20200612')
 
-
-
     @staticmethod
     def export_position():
         def export_position_fu(name):
@@ -1155,12 +1240,12 @@ if __name__ == '__main__':
     # import tushare as ts
     # df = ts.get_hist_data('600848', start='2019-10-05', end='2019-11-09',ktype='5')
     # print(df)
-    PositionMgr.do_trading()
-    PositionMgr.daily_run()
-    # # PositionMgr.export_position()
-    PositionMgr.report_position_realtime('宋茂东')
-    PositionMgr.report_position_realtime('宋1')
-    PositionMgr.report_position_realtime('刘波')
+    # PositionMgr.do_trading()
+    # # PositionMgr.daily_run()
+    # # # PositionMgr.export_position()
+    # PositionMgr.report_position_realtime('宋茂东')
+    # PositionMgr.report_position_realtime('宋1')
+    # PositionMgr.report_position_realtime('刘波')
     # print(PositionMgr.calc_initial_cash('宋茂东', 332.06))
     # print(PositionMgr.calc_initial_cash('刘波', 9.85))
     # print(PositionMgr.get_debt('宋茂东', u_day_befor(0)))
@@ -1173,6 +1258,8 @@ if __name__ == '__main__':
     # print(PositionMgr.get_debt('刘波', u_day_befor(0)))
 
     # PositionMgr.update_trading_record()
-    # PositionMgr.daily_run()
+    PositionMgr.daily_run()
     # PositionMgr.report_position('刘波', '20180101', '20191001')
     # PositionMgr.report_position('宋茂东', '20180101', '20191001')
+
+    # PositionMgr.position_overview('宋茂东', 'w')

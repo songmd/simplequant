@@ -127,6 +127,8 @@ def u_month_after(day, m):
     return dt.strftime('%Y%m%d')
 
 
+
+
 def u_month_begin(day=''):
     if day:
         dt = datetime.datetime.strptime(day, '%Y%m%d').date()
@@ -246,6 +248,27 @@ def u_create_path_by_system(name):
         return name
     return name
 
+def u_same_week(d1,d2):
+    dt1 = datetime.datetime.strptime(d1, '%Y%m%d').date()
+    week_begin = dt1 + datetime.timedelta(days=-dt1.weekday())
+    week_end = dt1 + datetime.timedelta(days=6-dt1.weekday())
+    dt2 = datetime.datetime.strptime(d2, '%Y%m%d').date()
+    return dt2 >= week_begin and dt2 <= week_end
+
+def u_same_month(d1,d2):
+    dt1 = datetime.datetime.strptime(d1, '%Y%m%d').date()
+    dt2 = datetime.datetime.strptime(d2, '%Y%m%d').date()
+    month_begin = dt1 - datetime.timedelta(days=dt1.day - 1)
+    next_month= month_begin + relativedelta(months=1)
+    dt2 = datetime.datetime.strptime(d2, '%Y%m%d').date()
+    return dt2 >= month_begin and dt2 < next_month
+
+def u_same_year(d1,d2):
+    dt1 = datetime.datetime.strptime(d1, '%Y%m%d').date()
+    dt2 = datetime.datetime.strptime(d2, '%Y%m%d').date()
+    return dt2.year == dt1.year
+
+
 if __name__ == '__main__':
     #   import cProfile
 
@@ -253,6 +276,7 @@ if __name__ == '__main__':
     # u_read_input()
     # print(u_days_diff('20200416','20200416'))
     # print(u_file_intersection(['data/input.txt', 'data/attention.txt']))
-    print(platform.system())
-    print(u_create_path_by_system('temp.txt'))
+    # print(platform.system())
+    # print(u_create_path_by_system('temp.txt'))
+    print( u_same_month('20201213','20201031') )
     pass

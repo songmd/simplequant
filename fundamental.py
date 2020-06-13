@@ -413,13 +413,14 @@ class Fundamental(object):
                         stock[0], stock[1], report_date[i], net_profit[i], net_profit_rate[i], kf_net_profit[i],
                         kf_net_profit_rate[i], revenue[i], revenue_rate[i]))
             # break
+            time.sleep(0.5)
         conn.commit()
         driver.close()
 
     @staticmethod
     def download_finance_data():
         all_stocks = Fundamental.get_stocks()
-        process_count = 7
+        process_count = 4
 
         process_per = int(len(all_stocks) / process_count + 3)
         # p = Pool(process_count)
@@ -1313,8 +1314,8 @@ if __name__ == '__main__':
     # Fundamental.download_basic()
     # Fundamental.download_industry()
     # Fundamental.download_concept()
-    # Fundamental.download_finance_data()
-    # Fundamental.analyze_finance_data()
+    Fundamental.download_finance_data()
+    Fundamental.analyze_finance_data()
 
     # cProfile.run('Fundamental.download_finance_data()')
     # cProfile.run('Fundamental.download_industry_concept()')
@@ -1327,7 +1328,7 @@ if __name__ == '__main__':
     # Fundamental.create_wencai_cookie()
     # cProfile.run('Fundamental.update_fundamental()')
     # cProfile.run('Fundamental.download_doctor()')
-    cProfile.run('Fundamental.daily_run2()')
+    # cProfile.run('Fundamental.daily_run2()')
     # Fundamental.jiejin()
     # Fundamental.update_bellwether()
     # Fundamental.download_operate()

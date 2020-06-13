@@ -48,10 +48,10 @@ def daily_synthesis():
     synthesis(u_create_path_by_system('t_acti_lht.txt'))
     synthesis(u_create_path_by_system('t_macd_today.txt'))
     synthesis(u_create_path_by_system('t_ss_today.txt'))
-    # synthesis(u_create_path_by_system('t_acti_check.txt'))
-    # synthesis(u_create_path_by_system('t_macd_check.txt'))
-    # synthesis(u_create_path_by_system('t_doctor_check.txt'))
-    # synthesis(u_create_path_by_system('t_yuzen_check.txt'))
+    synthesis(u_create_path_by_system('t_acti_check.txt'))
+    synthesis(u_create_path_by_system('t_macd_check.txt'))
+    synthesis(u_create_path_by_system('t_doctor_check.txt'))
+    synthesis(u_create_path_by_system('t_yuzen_check.txt'))
 
 
 if __name__ == '__main__':
@@ -80,3 +80,4 @@ if __name__ == '__main__':
     # synthesis('/Users/hero101/Documents/t_acti_check.txt')
     # synthesis('/Users/hero101/Documents/t_macd_check.txt')
     # synthesis('/Users/hero101/Documents/t_doctor_check.txt')
+    daily_synthesis()

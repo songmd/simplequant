@@ -933,7 +933,7 @@ class DataHandler(object):
 
     @staticmethod
     def get_history_price(stocks, trading_date):
-        conn = sqlite3.connect(DataHandler.COOKECD_DB)
+        conn = sqlite3.connect(DataHandler.RAW_DB)
         cursor = conn.cursor()
         result = {}
         for stock in stocks:

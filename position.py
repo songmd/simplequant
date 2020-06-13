@@ -1156,7 +1156,7 @@ if __name__ == '__main__':
     # df = ts.get_hist_data('600848', start='2019-10-05', end='2019-11-09',ktype='5')
     # print(df)
     PositionMgr.do_trading()
-    # PositionMgr.daily_run()
+    PositionMgr.daily_run()
     # # PositionMgr.export_position()
     PositionMgr.report_position_realtime('宋茂东')
     PositionMgr.report_position_realtime('宋1')

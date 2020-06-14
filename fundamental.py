@@ -639,7 +639,7 @@ class Fundamental(object):
 
         conn.commit()
 
-    pass
+        Fundamental.pick_by_fundamental()
 
     @staticmethod
     def download_industry():
@@ -761,8 +761,7 @@ class Fundamental(object):
         names = Fundamental.get_names()
         result = []
         for target in targets:
-            if len(target) != 6:
-                if target in names:
+            if target in names:
                     result.append(names[target])
             else:
                 result.append(target)
@@ -1314,8 +1313,8 @@ if __name__ == '__main__':
     # Fundamental.download_basic()
     # Fundamental.download_industry()
     # Fundamental.download_concept()
-    Fundamental.download_finance_data()
-    Fundamental.analyze_finance_data()
+    # Fundamental.download_finance_data()
+    # Fundamental.analyze_finance_data()
 
     # cProfile.run('Fundamental.download_finance_data()')
     # cProfile.run('Fundamental.download_industry_concept()')
@@ -1344,3 +1343,4 @@ if __name__ == '__main__':
     #     ])
     # Fundamental.pick_by_fundamental()
     # pass
+    # Fundamental.pick_by_fundamental()

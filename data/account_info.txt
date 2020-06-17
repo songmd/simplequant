@@ -22,6 +22,10 @@
             {
                 "amount": 11640,
                 "date_changed": "20200521"
+            },
+            {
+                "amount": -61640,
+                "date_changed": "20200617"
             }
         ],
         "name": "宋茂东",
@@ -39,6 +43,20 @@
             }
         ],
         "name": "宋1",
+        "trading_commission": 1.5e-04
+    },
+    {
+        "date_created": "20200617",
+        "interest_rate":0.00019444,
+        "initial_capital": 50000,
+        "initial_net_worth": 50000,
+        "capital_changed": [
+            {
+                "amount": 0,
+                "date_changed": "20200617"
+            }
+        ],
+        "name": "涨停板策略",
         "trading_commission": 1.5e-04
     }
 ]

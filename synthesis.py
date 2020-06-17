@@ -58,7 +58,7 @@ if __name__ == '__main__':
     import cProfile
 
     # daily_synthesis()
-    # synthesis('data/input.txt')
+    synthesis('data/input.txt')
     # synthesis('/Users/hero101/Documents/t_acti_lht.txt')
     # ret = u_file_intersection([
     #     'data/input.txt',
@@ -80,4 +80,4 @@ if __name__ == '__main__':
     # synthesis('/Users/hero101/Documents/t_acti_check.txt')
     # synthesis('/Users/hero101/Documents/t_macd_check.txt')
     # synthesis('/Users/hero101/Documents/t_doctor_check.txt')
-    daily_synthesis()
+    # daily_synthesis()

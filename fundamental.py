@@ -1027,7 +1027,7 @@ class Fundamental(object):
                 stock[0], stock[1], cpr, tcr, fdr, mgr, inr, bsr, cpl, cyw,
                 minc, minr, today))
             conn.commit()
-            time.sleep(0.25)
+            time.sleep(0.60)
             # break
         pass
 
@@ -1327,7 +1327,7 @@ if __name__ == '__main__':
     # Fundamental.create_wencai_cookie()
     # cProfile.run('Fundamental.update_fundamental()')
     # cProfile.run('Fundamental.download_doctor()')
-    # cProfile.run('Fundamental.daily_run2()')
+    cProfile.run('Fundamental.daily_run2()')
     # Fundamental.jiejin()
     # Fundamental.update_bellwether()
     # Fundamental.download_operate()

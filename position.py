@@ -16,6 +16,14 @@ class PositionMgr(object):
     FIANCE_TB = 'fiance_record'
 
     @staticmethod
+    def get_account_names():
+        with open(PositionMgr.ACCOUNT_INFO, encoding='utf-8') as f:
+            accounts = json.load(f)
+
+            return [ac['name'] for ac in accounts]
+        return []
+
+    @staticmethod
     def get_account(name):
         with open(PositionMgr.ACCOUNT_INFO, encoding='utf-8') as f:
             accounts = json.load(f)
@@ -901,16 +909,23 @@ class PositionMgr(object):
 
     @staticmethod
     def daily_run():
-        PositionMgr.stat_position('刘波', True)
-        PositionMgr.stat_position('宋茂东')
-        PositionMgr.stat_position('宋1')
+        ac_names = PositionMgr.get_account_names()
+        is_first = True
+        for ac in ac_names:
+            if is_first:
+                PositionMgr.stat_position(ac, True)
+                is_first = False
+            else:
+                PositionMgr.stat_position(ac,False)
+        # PositionMgr.stat_position('宋茂东')
+        # PositionMgr.stat_position('宋1')
 
-        PositionMgr.report_position_last_day('刘波')
-        PositionMgr.report_position_last_day('宋茂东')
-        PositionMgr.report_position_last_day('宋1')
+        for ac in ac_names:
+            PositionMgr.report_position_last_day(ac)
+        # PositionMgr.report_position_last_day('宋茂东')
+        # PositionMgr.report_position_last_day('宋1')
 
         PositionMgr.export_position()
-
 
         # PositionMgr.report_position('刘波', u_day_befor(0), u_day_befor(0), 'd')
         # PositionMgr.report_position('宋茂东', u_day_befor(0), u_day_befor(0), 'd')
@@ -928,21 +943,26 @@ class PositionMgr(object):
         # PositionMgr.report_position('宋茂东', u_year_begin(), u_day_befor(0), 'y')
         # PositionMgr.report_position('宋1', u_year_begin(), u_day_befor(0), 'y')
 
-        PositionMgr.position_overview('刘波',  'd')
-        PositionMgr.position_overview('宋茂东',  'd')
-        PositionMgr.position_overview('宋1',  'd')
+        for ac in ac_names:
 
-        PositionMgr.position_overview('刘波','w')
-        PositionMgr.position_overview('宋茂东', 'w')
-        PositionMgr.position_overview('宋1', 'w')
+            PositionMgr.position_overview(ac, 'd')
+            PositionMgr.position_overview(ac, 'w')
+            PositionMgr.position_overview(ac, 'm')
+            PositionMgr.position_overview(ac, 'y')
+        # PositionMgr.position_overview('宋茂东', 'd')
+        # PositionMgr.position_overview('宋1', 'd')
 
-        PositionMgr.position_overview('刘波', 'm')
-        PositionMgr.position_overview('宋茂东', 'm')
-        PositionMgr.position_overview('宋1',  'm')
-
-        PositionMgr.position_overview('刘波',  'y')
-        PositionMgr.position_overview('宋茂东', 'y')
-        PositionMgr.position_overview('宋1', 'y')
+        # PositionMgr.position_overview('刘波', 'w')
+        # PositionMgr.position_overview('宋茂东', 'w')
+        # PositionMgr.position_overview('宋1', 'w')
+        #
+        # PositionMgr.position_overview('刘波', 'm')
+        # PositionMgr.position_overview('宋茂东', 'm')
+        # PositionMgr.position_overview('宋1', 'm')
+        #
+        # PositionMgr.position_overview('刘波', 'y')
+        # PositionMgr.position_overview('宋茂东', 'y')
+        # PositionMgr.position_overview('宋1', 'y')
 
     @staticmethod
     def backup():
@@ -1203,6 +1223,27 @@ class PositionMgr(object):
         # PositionMgr.trade('宋1', 'buy', '元隆雅图', 300, 36.40, '20200612')
         # PositionMgr.trade('宋1', 'sell', '元隆雅图', 300, 38.61, '20200612')
 
+        # PositionMgr.trade('宋1', 'sell', '元隆雅图', 300, 40.33, '20200615')
+        # PositionMgr.trade('宋1', 'buy', '游族网络', 500, 22.32, '20200615')
+        # PositionMgr.trade('宋1', 'buy', '克来机电', 500, 25.51, '20200615')
+        # PositionMgr.trade('宋1', 'buy', '佳云科技', 1500, 7.53, '20200615')
+        # PositionMgr.trade('宋1', 'buy', '光韵达', 1500, 8.98, '20200615')
+
+        # PositionMgr.trade('宋1', 'sell', '游族网络', 1000, 23.15, '20200616')
+        # PositionMgr.trade('宋茂东', 'sell', '意华股份', 20000, 33.52, '20200616')
+        # PositionMgr.trade('宋1', 'buy', '明阳电路', 600, 20.08, '20200616')
+
+        # PositionMgr.trade('宋1', 'sell', '佳云科技', 1500, 7.67, '20200617')
+        # PositionMgr.trade('宋1', 'buy', '光韵达', 1500, 9.65, '20200617')
+        # PositionMgr.trade('宋1','buy','航发控制',1000,13.50,'20200617')
+
+        # PositionMgr.trade('宋1', 'buy', '游族网络', 600, 22.27, '20200617')
+
+        # PositionMgr.trade('宋茂东', 'buy', '克来机电', 5000, 25.85, '20200617')
+        # PositionMgr.trade('宋茂东', 'buy', '光韵达', 12000, 9.53, '20200617')
+
+        # PositionMgr.trade('涨停版策略', 'buy', '盛天网络', 500, 23.68, '20200617')
+
     @staticmethod
     def export_position():
         def export_position_fu(name):
@@ -1227,11 +1268,18 @@ class PositionMgr(object):
                     p2.add(code2name[code])
             return p1, p2
 
-        lp1, lp2 = export_position_fu('刘波')
-        sp1, sp2 = export_position_fu('宋茂东')
-        sp11, sp12 = export_position_fu('宋1')
-        u_write_to_file('data/position.txt', lp1 | sp1 | sp11)
-        u_write_to_file_append('data/attention.txt', lp2 | sp2 | sp12)
+        ac_names = PositionMgr.get_account_names()
+        position_s = set()
+        attention_s = set()
+        for ac in ac_names:
+            p_s, a_s = export_position_fu(ac)
+            position_s |= p_s
+            attention_s |= a_s
+        # lp1, lp2 = export_position_fu('刘波')
+        # sp1, sp2 = export_position_fu('宋茂东')
+        # sp11, sp12 = export_position_fu('宋1')
+        u_write_to_file('data/position.txt', position_s)
+        u_write_to_file_append('data/attention.txt', attention_s)
 
 
 if __name__ == '__main__':
@@ -1240,12 +1288,15 @@ if __name__ == '__main__':
     # import tushare as ts
     # df = ts.get_hist_data('600848', start='2019-10-05', end='2019-11-09',ktype='5')
     # print(df)
-    # PositionMgr.do_trading()
+    PositionMgr.do_trading()
     # # PositionMgr.daily_run()
     # # # PositionMgr.export_position()
-    # PositionMgr.report_position_realtime('宋茂东')
-    # PositionMgr.report_position_realtime('宋1')
-    # PositionMgr.report_position_realtime('刘波')
+    ac_names = PositionMgr.get_account_names()
+    for ac in ac_names:
+        PositionMgr.report_position_realtime(ac)
+        PositionMgr.report_position_realtime(ac)
+        PositionMgr.report_position_realtime(ac)
+
     # print(PositionMgr.calc_initial_cash('宋茂东', 332.06))
     # print(PositionMgr.calc_initial_cash('刘波', 9.85))
     # print(PositionMgr.get_debt('宋茂东', u_day_befor(0)))
@@ -1258,7 +1309,7 @@ if __name__ == '__main__':
     # print(PositionMgr.get_debt('刘波', u_day_befor(0)))
 
     # PositionMgr.update_trading_record()
-    PositionMgr.daily_run()
+    # PositionMgr.daily_run()
     # PositionMgr.report_position('刘波', '20180101', '20191001')
     # PositionMgr.report_position('宋茂东', '20180101', '20191001')
 

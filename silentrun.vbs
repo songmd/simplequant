@@ -1,0 +1,1 @@
+CreateObject("WScript.Shell").Run "cmd /c C:\Users\songm\PycharmProjects\simplequant\autostart.bat",0

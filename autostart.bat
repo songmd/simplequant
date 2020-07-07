@@ -1,0 +1,1 @@
+C:\Users\songm\PycharmProjects\gvenv\Scripts\python.exe  C:\Users\songm\PycharmProjects\simplequant\automation.py

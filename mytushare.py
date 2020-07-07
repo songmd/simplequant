@@ -112,3 +112,168 @@ def get_realtime_quotes(symbols=None):
     for txt in ls:
         df[txt] = df[txt].map(lambda x: x[:-2])
     return df
+
+
+# !/usr/bin/env python
+
+# -*- coding: utf-8 -*-
+
+# @license : (C) Copyright 2017-2020.
+
+# @contact : xsophiax
+
+# @Time    : 2020/6/8 10:10
+
+# @File    : get_today_all_xsophiax.py
+
+# @Software: PyCharm
+
+# @desc    :
+
+
+import time
+
+import json
+
+import lxml.html
+
+from lxml import etree
+
+import pandas as pd
+
+import numpy as np
+
+import datetime
+
+from tushare.stock import cons as ct
+
+import re
+
+from tushare.util import dateu as du
+
+from tushare.util.formula import MA
+
+import os
+
+from tushare.util.conns import get_apis, close_apis
+
+from tushare.stock.fundamental import get_stock_basics
+
+try:
+
+    from urllib.request import urlopen, Request
+
+except ImportError:
+
+    from urllib2 import urlopen, Request
+
+v = pd.__version__
+
+if int(v.split('.')[1]) >= 25 or int(v.split('.')[0]) > 0:
+
+    from io import StringIO
+
+else:
+
+    from pandas.compat import StringIO
+
+
+def _parsing_dayprice_json(types=None, page=1):
+    """
+
+           处理当日行情分页数据，格式为json
+
+     Parameters
+
+     ------
+
+        pageNum:页码
+
+     return
+
+     -------
+
+        DataFrame 当日所有股票交易数据(DataFrame)
+
+    """
+
+    ct._write_console()
+
+    request = Request(ct.SINA_DAY_PRICE_URL % (ct.P_TYPE['http'], ct.DOMAINS['vsf'],
+
+                                               ct.PAGES['jv'], types, page))
+
+    text = urlopen(request, timeout=10).read()
+
+    if text == 'null':
+        return None
+
+    reg = re.compile(r'\,(.*?)\:')
+
+    text = reg.sub(r',"\1":', text.decode('gbk') if ct.PY3 else text)
+
+    text = text.replace('"{"symbol', '{"symbol')
+
+    text = text.replace('{symbol', '{"symbol"')
+
+    text = text.replace('""', '"')
+
+    if ct.PY3:
+
+        jstr = json.dumps(text)
+
+    else:
+
+        jstr = json.dumps(text, encoding='GBK')
+
+    js = json.loads(jstr)
+
+    df = pd.DataFrame(pd.read_json(js, dtype={'code': object}),
+
+                      columns=ct.DAY_TRADING_COLUMNS)
+
+    df = df.drop('symbol', axis=1)
+
+    #     df = df.ix[df.volume > 0]
+
+    return df
+
+
+def get_today_all():
+    """
+
+        一次性获取最近一个日交易日所有股票的交易数据
+
+    return
+
+    -------
+
+      DataFrame
+
+           属性：代码，名称，涨跌幅，现价，开盘价，最高价，最低价，最日收盘价，成交量，换手率，成交额，市盈率，市净率，总市值，流通市值
+
+    """
+
+    ct._write_head()
+
+    df = _parsing_dayprice_json('hs_a', 1)
+
+    if df is not None:
+
+        for i in range(2, ct.PAGE_NUM[1]):
+
+            newdf = _parsing_dayprice_json('hs_a', i)
+
+            if newdf.shape[0] > 0:
+
+                df = df.append(newdf, ignore_index=True)
+
+            else:
+
+                break
+
+    df = df.append(_parsing_dayprice_json('shfxjs', 1),
+
+                   ignore_index=True)
+
+    return df

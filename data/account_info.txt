@@ -56,7 +56,7 @@
                 "date_changed": "20200617"
             }
         ],
-        "name": "涨停板策略",
+        "name": "ztb",
         "trading_commission": 1.5e-04
     }
 ]

@@ -17,9 +17,9 @@ def daily_run():
     # DataHandler.download_index()
     # DataHandler.create_attention_ex()
     #
-    dh_daily_run()
-    picking_daily()
-    find_macd_target()
+    # dh_daily_run()
+    # picking_daily()
+    # find_macd_target()
     Fundamental.daily_run()
     PositionMgr.daily_run()
     daily_synthesis()

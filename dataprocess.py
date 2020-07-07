@@ -1309,12 +1309,16 @@ def profile_run3():
 
     # DataHandler.download_index()
 
-    engine = create_engine('sqlite:///' + DataHandler.RAW_DB)
-    pro = ts.pro_api()
-    df = pro.stk_holdertrade()
-    df.to_sql('zjc', engine, if_exists='replace', index=False)
+    from mytushare import get_today_all
 
-    print(df)
+    engine = create_engine('sqlite:///' + DataHandler.RAW_DB)
+    # pro = ts.pro_api()
+    # df = pro.stk_holdertrade()
+    # df = get_today_all()
+    df = ts.get_hist_data('600848',start='2020-07-03',end='2020-07-09')
+    df.to_sql('test', engine, if_exists='replace')
+
+    # print(df)
     # # df = pro.index_basic(market='SSE')
     # df = pro.index_basic(market='SZSE')
     # for index, row in df.iterrows():
@@ -1346,7 +1350,7 @@ if __name__ == '__main__':
     # DataHandler.monitor_macd(False)
     # df = ts.get_realtime_quotes(['000980', '000981'])
     # print(df)
-    # cProfile.run('profile_run4()')
+    # cProfile.run('profile_run3()')
     # profile_run4()
 
     # DataHandler.select_today_macd()
@@ -1366,7 +1370,7 @@ if __name__ == '__main__':
     # DataHandler.daily_routine()
     # DataHandler.create_today_table()
     # DataHandler.select_today_macd()
-    # ts.set_token('96242c965655948aef082bf119dc45d6f9ee05625306e2e130d1f056')
+    ts.set_token('14ca3135580f5879f8eab4c629ebf4e93726a0666280ea96286805b6')
 
     # pro = ts.pro_api()
     #

@@ -97,8 +97,8 @@ class PositionMgr(object):
         conn = sqlite3.connect(PositionMgr.POSMGR_DB)
         cursor = conn.cursor()
         table_name = PositionMgr.TRDREC_TB
-        cursor.execute(
-            "select * from '%s' where name = '%s' order by trading_date" % (table_name, name))
+        sql = "select * from '%s' where name = '%s' order by trading_date" % (table_name, name)
+        cursor.execute(sql)
         return [{'name': row[0],
                  'stock_code': row[1],
                  'type': row[2],
@@ -412,10 +412,17 @@ class PositionMgr(object):
             end_rec = recs[i]
             base_rec = recs[i + 1]
 
+            # # 净值变化
+            # dif_ntcp = round(end_rec[2] - base_rec[2], 2)
+            # # 收益率
+            # rr = round((end_rec[2] / base_rec[2] - 1) * 100, 2)
+
             # 净值变化
-            dif_ntcp = round(end_rec[2] - base_rec[2], 2)
+            net_changed = PositionMgr.get_net_changed(name, base_rec[1], end_rec[1])
+            dif_ntcp = round(end_rec[2] - base_rec[2] - net_changed, 2)
             # 收益率
-            rr = round((end_rec[2] / base_rec[2] - 1) * 100, 2)
+            rr = round((dif_ntcp / base_rec[2]) * 100, 2)
+
             # 指数基准收益率
             base_inds = DataHandler.get_index_base(base_rec[1], end_rec[1])
             base_inds_str = ['%5s%%' % (base_inds[k],) for k in base_inds]
@@ -490,11 +497,16 @@ class PositionMgr(object):
 
         end_rec = report_rec[-1]
 
+        # # 净值变化
+        # dif_ntcp = round(end_rec[2] - base_rec[2], 2)
+        #
+        # # 收益率
+        # rr = round((end_rec[2] / base_rec[2] - 1) * 100, 2)
         # 净值变化
-        dif_ntcp = round(end_rec[2] - base_rec[2], 2)
-
+        net_changed = PositionMgr.get_net_changed(name, base_rec[1], end_rec[1])
+        dif_ntcp = round(end_rec[2] - base_rec[2] - net_changed, 2)
         # 收益率
-        rr = round((end_rec[2] / base_rec[2] - 1) * 100, 2)
+        rr = round((dif_ntcp / base_rec[2]) * 100, 2)
 
         # 指数基准收益率
         base_inds = DataHandler.get_index_base(base_rec[1], report_rec[-1][1])
@@ -703,6 +715,16 @@ class PositionMgr(object):
         pass
 
     @staticmethod
+    def get_net_changed(name, begin_date, end_date):
+        ac = PositionMgr.get_account(name)
+        net_changed = 0
+
+        for cc in ac['capital_changed']:
+            if cc['date_changed'] <= end_date and cc['date_changed'] >= begin_date:
+                net_changed += cc['amount']
+        return net_changed
+
+    @staticmethod
     def report_position_last_day(name):
         conn = sqlite3.connect(PositionMgr.POSMGR_DB)
         cursor = conn.cursor()
@@ -731,9 +753,10 @@ class PositionMgr(object):
         # 当前净值
         ntcp = end_rec[2]
         # 净值变化
-        dif_ntcp = round(end_rec[2] - base_rec[2], 2)
+        net_changed = PositionMgr.get_net_changed(name, base_rec[1], end_rec[1])
+        dif_ntcp = round(end_rec[2] - base_rec[2] - net_changed, 2)
         # 收益率
-        rr = round((end_rec[2] / base_rec[2] - 1) * 100, 2)
+        rr = round((dif_ntcp / base_rec[2]) * 100, 2)
         # 当前总市值
         tmv = end_rec[5]
         # 当前仓位
@@ -916,7 +939,7 @@ class PositionMgr(object):
                 PositionMgr.stat_position(ac, True)
                 is_first = False
             else:
-                PositionMgr.stat_position(ac,False)
+                PositionMgr.stat_position(ac, False)
         # PositionMgr.stat_position('宋茂东')
         # PositionMgr.stat_position('宋1')
 
@@ -944,7 +967,6 @@ class PositionMgr(object):
         # PositionMgr.report_position('宋1', u_year_begin(), u_day_befor(0), 'y')
 
         for ac in ac_names:
-
             PositionMgr.position_overview(ac, 'd')
             PositionMgr.position_overview(ac, 'w')
             PositionMgr.position_overview(ac, 'm')
@@ -1203,13 +1225,13 @@ class PositionMgr(object):
         #
         # PositionMgr.trade('宋茂东', 'buy', '中科信息', 8000, 22.95, '20200515')
         #
-        # PositionMgr.trade('宋1', '', '金杯电工', 0, 500, '20200518')
-        # PositionMgr.trade('宋1', 'buy', '广和通', 0, 80, '20200519')
-        # PositionMgr.trade('宋1', 'buy', '广和通', 160, 0, '20200519')
+        # PositionMgr.trade('宋1', '', '金杯电工', 0, 500, '20200519')
+        # PositionMgr.trade('宋1', 'buy', '广和通', 0, 80, '20200520')
+        # PositionMgr.trade('宋1', 'buy', '广和通', 160, 0, '20200520')
         #
         # PositionMgr.trade('宋茂东', 'buy', '奥特维', 500, 23.280, '20200521')
         #
-        # PositionMgr.trade('宋1', '', '明阳电路', 0, 132.00, '20200528')
+        # PositionMgr.trade('宋1', '', '明阳电路', 0, 132.00, '20200529')
         #
         # PositionMgr.trade('宋茂东', 'buy', '纵横通信', 0, 2440, '20200608')
         # PositionMgr.trade('宋茂东', 'buy', '纵横通信', 18300, 0, '20200608')
@@ -1242,7 +1264,43 @@ class PositionMgr(object):
         # PositionMgr.trade('宋茂东', 'buy', '克来机电', 5000, 25.85, '20200617')
         # PositionMgr.trade('宋茂东', 'buy', '光韵达', 12000, 9.53, '20200617')
 
-        # PositionMgr.trade('涨停版策略', 'buy', '盛天网络', 500, 23.68, '20200617')
+        # PositionMgr.trade('ztb', 'buy', '盛天网络', 500, 23.68, '20200617')
+
+        # PositionMgr.trade('宋茂东', 'buy', '中科信息', 0, 1100, '20200618')
+
+        # PositionMgr.trade('宋茂东', 'buy', '北鼎股份', 500, 5.91, '20200619')
+
+        # PositionMgr.trade('宋茂东', 'buy', '中科信息', 5000, 21.69, '20200622')
+        # PositionMgr.trade('宋茂东', 'buy', '光韵达', 10000, 10.01, '20200622')
+        # PositionMgr.trade('宋茂东', 'buy', '中新赛克', 1000, 154.10, '20200622')
+        #
+        # PositionMgr.trade('宋茂东', 'buy', '中贝通信', 0, 8175, '20200624')
+        # PositionMgr.trade('刘波', 'buy', '中贝通信', 0, 705, '20200624')
+        #
+        # PositionMgr.trade('宋茂东', 'sell', '克来机电', 5000, 27.35, '20200624')
+        #
+        # PositionMgr.trade('宋茂东', 'buy', '中新赛克', 1000, 159.48, '20200624')
+        # PositionMgr.trade('宋1', 'buy', '金杯电工', 2000, 5.30, '20200624')
+        # PositionMgr.trade('宋1', 'sell', '游族网络', 600, 25.88, '20200624')
+        # PositionMgr.trade('宋1', 'sell', '明阳电路', 1200, 20.58, '20200624')
+        # PositionMgr.trade('宋1', 'sell', '克来机电', 500, 27.35, '20200624')
+        # PositionMgr.trade('宋1', 'sell', '航发控制', 2000, 13.77, '20200624')
+
+        # PositionMgr.trade('宋1', 'buy', '明阳电路', 0, -13.20, '20200624')
+        #
+        # PositionMgr.trade('ztb', 'buy', '盛天网络', 0, 11.00, '20200629')
+        #
+        # PositionMgr.trade('宋1', 'buy', '鱼跃医疗', 400, 34.67, '20200629')
+        #
+        # PositionMgr.trade('ztb', 'buy', '盛天网络', 500, 22.77, '20200630')
+        #
+        # PositionMgr.trade('宋茂东', 'buy', '中新赛克', 1200, 0, '20200703')
+        # PositionMgr.trade('宋茂东', 'buy', '中新赛克', 0, 1300, '20200703')
+        #
+        # PositionMgr.trade('宋茂东', 'buy', '奥特维', 200, 58.08, '20200703')
+        # PositionMgr.trade('宋茂东', 'buy', '奥特维', 300, 59.80, '20200703')
+        #
+        # PositionMgr.trade('宋1', 'buy', '中航电测', 1000, 11.93, '20200703')
 
     @staticmethod
     def export_position():
@@ -1289,12 +1347,10 @@ if __name__ == '__main__':
     # df = ts.get_hist_data('600848', start='2019-10-05', end='2019-11-09',ktype='5')
     # print(df)
     PositionMgr.do_trading()
-    # # PositionMgr.daily_run()
+    # PositionMgr.daily_run()
     # # # PositionMgr.export_position()
     ac_names = PositionMgr.get_account_names()
     for ac in ac_names:
-        PositionMgr.report_position_realtime(ac)
-        PositionMgr.report_position_realtime(ac)
         PositionMgr.report_position_realtime(ac)
 
     # print(PositionMgr.calc_initial_cash('宋茂东', 332.06))
